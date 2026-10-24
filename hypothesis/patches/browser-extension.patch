@@ -1,0 +1,1463 @@
+diff --git a/Makefile b/Makefile
+index 4118919..e383fc8 100644
+--- a/Makefile
++++ b/Makefile
+@@ -44,7 +44,7 @@ build/settings.json: force
+ 	rsync --checksum $@.tmp $@
+ 	rm $@.tmp
+ 
+-EXTENSION_SRC := pdfjs help images options
++EXTENSION_SRC := pdfjs help images options research
+ 
+ .PHONY: extension
+ extension: build/extension.bundle.js
+diff --git a/package.json b/package.json
+index e40a5f2..86c5161 100644
+--- a/package.json
++++ b/package.json
+@@ -53,5 +53,8 @@
+     "test": "gulp test",
+     "typecheck": "tsc --build src/tsconfig.json"
+   },
+-  "packageManager": "yarn@3.6.1"
++  "packageManager": "yarn@3.6.1",
++  "resolutions": {
++    "hypothesis": "portal:../client"
++  }
+ }
+diff --git a/src/background/browser-action.ts b/src/background/browser-action.ts
+index 161309c..3e1abee 100644
+--- a/src/background/browser-action.ts
++++ b/src/background/browser-action.ts
+@@ -45,22 +45,35 @@ export class BrowserAction {
+    * H state of a tab.
+    */
+   update(tabId: number, state: TabState) {
++    const product = settings.localResearch ? 'sidenote' : 'Hypothesis';
++    const productIcons = settings.localResearch
++      ? {
++          active: {
++            19: 'images/sidenote-active.png',
++            38: 'images/sidenote-active@2x.png',
++          },
++          inactive: {
++            19: 'images/sidenote-inactive.png',
++            38: 'images/sidenote-inactive@2x.png',
++          },
++        }
++      : icons;
+     let activeIcon;
+     let title;
+     let badgeText = '';
+ 
+     switch (state.state) {
+       case 'active':
+-        activeIcon = icons.active;
+-        title = 'Hypothesis is active';
++        activeIcon = productIcons.active;
++        title = `${product} is active`;
+         break;
+       case 'inactive':
+-        activeIcon = icons.inactive;
+-        title = 'Hypothesis is inactive';
++        activeIcon = productIcons.inactive;
++        title = `${product} is inactive`;
+         break;
+       case 'errored':
+-        activeIcon = icons.inactive;
+-        title = 'Hypothesis failed to load';
++        activeIcon = productIcons.inactive;
++        title = `${product} failed to load`;
+         badgeText = '!';
+         break;
+     }
+diff --git a/src/background/index.ts b/src/background/index.ts
+index 3d5498a..eafc9a9 100644
+--- a/src/background/index.ts
++++ b/src/background/index.ts
+@@ -1,6 +1,7 @@
+ import { chromeAPI } from './chrome-api';
+ import { Extension } from './extension';
+ import type { ExternalMessage } from './messages';
++import { initLocalResearch } from './local-research';
+ 
+ /**
+  * Link to survey to show users after extension is uninstalled.
+@@ -16,6 +17,7 @@ export const uninstallURL =
+  * This is exported for use in tests.
+  */
+ export async function init() {
++  initLocalResearch();
+   const extension = new Extension();
+   const initialized = extension.init();
+ 
+diff --git a/src/background/settings.ts b/src/background/settings.ts
+index d3f8eb1..1971f60 100644
+--- a/src/background/settings.ts
++++ b/src/background/settings.ts
+@@ -7,6 +7,7 @@
+ export type Settings = {
+   apiUrl: string;
+   buildType: string;
++  localResearch?: boolean;
+   serviceUrl: string;
+ };
+ 
+diff --git a/src/help/index.html b/src/help/index.html
+index 8e4d98c..9666d28 100644
+--- a/src/help/index.html
++++ b/src/help/index.html
+@@ -1,7 +1,7 @@
+ <html lang="en">
+   <head>
+     <meta charset="utf-8" />
+-    <title>Hypothesis Help</title>
++    <title>sidenote Help</title>
+     <style>
+       body {
+         font-family: 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;
+@@ -77,7 +77,7 @@
+     <article class="help-container">
+       <section id="no-file-access" class="help-item">
+         <img class="help-item__icon" src="sad-annotation.svg" />
+-        <h1 class="help-item__heading">We’re sorry, Hypothesis couldn’t open that file…</h1>
++        <h1 class="help-item__heading">We’re sorry, sidenote couldn’t open that file…</h1>
+         <p>
+           You may need to change your settings. 
+           <a href="https://web.hypothes.is/help/annotating-locally-saved-pdfs/#2-change-your-settings-in-chrome-if-applicable">
+@@ -86,12 +86,12 @@
+       </section>
+       <section id="local-file" class="help-item">
+         <img class="help-item__icon" src="sad-annotation.svg" />
+-        <h1 class="help-item__heading">We’re sorry, Hypothesis couldn’t open that file…</h1>
++        <h1 class="help-item__heading">We’re sorry, sidenote couldn’t open that file…</h1>
+         <p class="center">This extension can’t be used on local HTML documents at the moment.</p>
+       </section>
+       <section id="restricted-protocol" class="help-item">
+         <img class="help-item__icon" src="sad-annotation.svg" />
+-        <h1 class="help-item__heading">We’re sorry, Hypothesis doesn’t work on this page…</h1>
++        <h1 class="help-item__heading">We’re sorry, sidenote doesn’t work on this page…</h1>
+         <p class="center">
+           This extension can only be used on pages where the URL starts with "http:",
+           "https:" or "file:".
+@@ -99,16 +99,16 @@
+         <p class="center">
+           If you have a Chrome extension installed that provides a custom viewer
+           for PDFs or other file types, that may prevent them from being annotated
+-          with Hypothesis.
++          with sidenote.
+         </p>
+       </section>
+       <section id="blocked-site" class="help-item">
+         <img class="help-item__icon" src="sad-annotation.svg" />
+-        <h1 class="help-item__heading">We’re sorry, Hypothesis doesn't work on this site.</h1>
++        <h1 class="help-item__heading">We’re sorry, sidenote doesn't work on this site.</h1>
+       </section>
+       <section id="other-error" class="help-item">
+         <img class="help-item__icon" src="sad-annotation.svg" />
+-        <h1 class="help-item__heading">We're sorry, Hypothesis failed to load on this page.</h1>
++        <h1 class="help-item__heading">We're sorry, sidenote failed to load on this page.</h1>
+         <p class="center">
+           The problem has been reported to our team. If it continues, please contact
+           <a href="mailto:support@hypothes.is">support@hypothes.is</a> and provide these
+diff --git a/src/manifest.json.mustache b/src/manifest.json.mustache
+index 2a33dc6..677af98 100644
+--- a/src/manifest.json.mustache
++++ b/src/manifest.json.mustache
+@@ -1,6 +1,12 @@
+ {
++  {{#localResearch}}
++  "name": "sidenote",
++  "short_name": "sidenote",
++  {{/localResearch}}
++  {{^localResearch}}
+   "name": "Hypothesis - Web & PDF Annotation",
+   "short_name": "Hypothesis",
++  {{/localResearch}}
+   "version": "{{ version }}",
+   {{#browserIsChrome}}
+   "version_name": "{{ version }} ({{ versionName }})",
+@@ -23,6 +29,16 @@
+   },
+   {{/browserIsFirefox}}
+ 
++  {{#localResearch}}
++  "description": "Save, annotate, and revisit your reading with a local library, notes, and paper recommendations.",
++  "icons": {
++    "16": "images/sidenote16.png",
++    "48": "images/sidenote48.png",
++    "128": "images/sidenote128.png"
++  },
++  "homepage_url": "https://github.com/YXGuan/sidenote",
++  {{/localResearch}}
++  {{^localResearch}}
+   "description": "Collaboratively annotate, highlight, and tag web pages and PDF documents.",
+   "icons": {
+     "16": "images/icon16.png",
+@@ -31,6 +47,7 @@
+   },
+ 
+   "homepage_url": "https://hypothes.is/",
++  {{/localResearch}}
+ 
+   {{! Firefox does not support the "split" mode.
+       See https://developer.mozilla.org/en-US/Add-ons/WebExtensions/manifest.json/incognito
+@@ -64,11 +81,28 @@
+     "service_worker": "extension.bundle.js"
+   },
+ 
++  {{#localResearch}}
++  "content_scripts": [{
++    "matches": ["https://hypothes.is/users/*"],
++    "js": ["research/profile.js"],
++    "run_at": "document_idle"
++  }],
++  {{/localResearch}}
++
+   "action": {
++    {{#localResearch}}
++    "default_title": "sidenote",
++    "default_icon": {
++      "19": "images/sidenote-inactive.png",
++      "38": "images/sidenote-inactive@2x.png"
++    }
++    {{/localResearch}}
++    {{^localResearch}}
+     "default_icon": {
+       "19": "images/browser-icon-inactive.png",
+       "38": "images/browser-icon-inactive@2x.png"
+     }
++    {{/localResearch}}
+   },
+ 
+   {{#browserIsChrome}}
+diff --git a/src/options/index.html b/src/options/index.html
+index cb13792..643fc2b 100644
+--- a/src/options/index.html
++++ b/src/options/index.html
+@@ -1,7 +1,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
+-  <title>Hypothesis Extension Settings</title>
++  <title>sidenote settings</title>
+   <style>
+     .hint {
+       font-size: 90%;
+@@ -11,6 +11,7 @@
+ 
+ <body>
+   <main>
++    <h1 style="display:flex;align-items:center;gap:10px"><img src="../images/sidenote.svg" width="36" height="36" alt="">sidenote settings</h1>
+     <input type="checkbox" id="badge">
+     <label for="badge">Enable extension badge</label>
+     <p class="hint">
+@@ -20,6 +21,15 @@
+         service for this data.
+     </p>
+ 
++    <hr>
++    <h2>Local research</h2>
++    <p><a id="open-local-library" target="_blank">Open local library</a></p>
++    <label for="research-key">Local storage key</label>
++    <input id="research-key" type="password" autocomplete="off">
++    <button id="save-research" type="button">Save</button>
++    <p class="hint">Get this key by running <code>./research-partner/notes pair</code>. Keep the local storage service running.</p>
++    <p><input id="research-auto-tags" type="checkbox" checked><label for="research-auto-tags">Automatically categorize opened pages</label></p>
++    <p id="research-status" role="status"></p>
+     <script type="module" src="options.js"></script>
+   </main>
+ </body>
+diff --git a/src/options/options.js b/src/options/options.js
+index 5da7862..efa8d3b 100644
+--- a/src/options/options.js
++++ b/src/options/options.js
+@@ -23,4 +23,41 @@ function loadOptions() {
+ }
+ 
+ document.addEventListener('DOMContentLoaded', loadOptions);
++document
++  .getElementById('open-local-library')
++  ?.setAttribute(
++    'href',
++    chrome.runtime.getURL('client/notebook.html?local-library=1'),
++  );
+ badgeCheckbox().addEventListener('click', saveOptions);
++
++const researchKey = /** @type {HTMLInputElement} */ (
++  document.getElementById('research-key')
++);
++const researchAutoTags = /** @type {HTMLInputElement} */ (
++  document.getElementById('research-auto-tags')
++);
++chrome.storage.local
++  .get({ researchKey: '', researchAutoTags: true })
++  .then(values => {
++    researchKey.value = String(values.researchKey ?? '');
++    researchAutoTags.checked = values.researchAutoTags !== false;
++  });
++document
++  .getElementById('save-research')
++  ?.addEventListener('click', async () => {
++    await chrome.storage.local.set({
++      researchKey: researchKey.value.trim(),
++      researchAutoTags: researchAutoTags.checked,
++    });
++    const status = document.getElementById('research-status');
++    const result = await chrome.runtime.sendMessage({
++      type: 'local-research',
++      action: 'status',
++    });
++    if (status) {
++      status.textContent = result.ok
++        ? `Connected. ${result.data.documents} sources saved locally.`
++        : result.error;
++    }
++  });
+diff --git a/src/sidebar-app.html.mustache b/src/sidebar-app.html.mustache
+index 0415cfe..646ba87 100644
+--- a/src/sidebar-app.html.mustache
++++ b/src/sidebar-app.html.mustache
+@@ -2,6 +2,7 @@
+ <html lang="en">
+   <head>
+     <meta charset="UTF-8">
++    <title>{{title}}</title>
+   </head>
+   <body>
+     <hypothesis-app></hypothesis-app>
+diff --git a/tests/background/browser-action-test.js b/tests/background/browser-action-test.js
+index 5069c0a..a14c8dd 100644
+--- a/tests/background/browser-action-test.js
++++ b/tests/background/browser-action-test.js
+@@ -29,6 +29,7 @@ describe('BrowserAction', () => {
+ 
+     $imports.$mock({
+       './chrome-api': { chromeAPI },
++      './settings': { default: { buildType: 'production', localResearch: false } },
+     });
+     action = new BrowserAction(fakeChromeBrowserAction);
+   });
+@@ -155,6 +156,26 @@ describe('BrowserAction', () => {
+     });
+   });
+ 
++  it('uses the sidenote name and icon for the local build', () => {
++    $imports.$mock({
++      './settings': { default: { buildType: 'production', localResearch: true } },
++    });
++    action.update(1, { state: 'active' });
++    assert.equal(fakeChromeBrowserAction.title, 'sidenote is active');
++    assert.equal(
++      fakeChromeBrowserAction.icon[19],
++      'images/sidenote-active.png',
++    );
++    action.update(1, { state: 'inactive' });
++    assert.equal(fakeChromeBrowserAction.title, 'sidenote is inactive');
++    assert.equal(
++      fakeChromeBrowserAction.icon[38],
++      'images/sidenote-inactive@2x.png',
++    );
++    action.update(1, { state: 'errored' });
++    assert.equal(fakeChromeBrowserAction.title, 'sidenote failed to load');
++  });
++
+   describe('build type', () => {
+     beforeEach(() => {
+       const fakeSettings = {
+diff --git a/tools/template-context-app.js b/tools/template-context-app.js
+index 3fcd456..f4b901f 100755
+--- a/tools/template-context-app.js
++++ b/tools/template-context-app.js
+@@ -27,6 +27,9 @@ function appSettings(settings) {
+   if (settings.oauthClientId) {
+     result.oauthClientId = settings.oauthClientId;
+   }
++  if (settings.localResearchAuth) {
++    result.localResearchAuth = true;
++  }
+ 
+   return result;
+ }
+@@ -43,5 +46,6 @@ const settings = JSON.parse(
+ console.log(
+   JSON.stringify({
+     settings: JSON.stringify(appSettings(settings)),
++    title: settings.localResearch ? 'sidenote' : 'Hypothesis',
+   }),
+ );
+diff --git a/yarn.lock b/yarn.lock
+index 4a0799c..fe238e2 100644
+--- a/yarn.lock
++++ b/yarn.lock
+@@ -4287,6 +4287,13 @@ __metadata:
+   languageName: node
+   linkType: hard
+ 
++"cytoscape@npm:3.33.1":
++  version: 3.33.1
++  resolution: "cytoscape@npm:3.33.1"
++  checksum: 4ebb9551ecb868fc6e831f523933bf96bd107d09b984d6d44db45adfd0a0f82f3383d7d0d5bc2053267ab2e8da47ce5ea280159643e818a4f2534affee248db8
++  languageName: node
++  linkType: hard
++
+ "data-view-buffer@npm:^1.0.2":
+   version: 1.0.2
+   resolution: "data-view-buffer@npm:1.0.2"
+@@ -6110,12 +6117,13 @@ __metadata:
+   languageName: unknown
+   linkType: soft
+ 
+-"hypothesis@npm:^1.1769.0":
+-  version: 1.1769.0
+-  resolution: "hypothesis@npm:1.1769.0"
+-  checksum: 474665f5b5df8cdb721ae101a9c650e09d1b0c6ac60a55015803040065686496080a7d33f9f7b96cf7a736fc15f5a62e827fbb79543d6e193654529334e19c8b
++"hypothesis@portal:../client::locator=hypothesis-browser-extension%40workspace%3A.":
++  version: 0.0.0-use.local
++  resolution: "hypothesis@portal:../client::locator=hypothesis-browser-extension%40workspace%3A."
++  dependencies:
++    cytoscape: 3.33.1
+   languageName: node
+-  linkType: hard
++  linkType: soft
+ 
+ "iconv-lite@npm:0.6.3, iconv-lite@npm:^0.6.2, iconv-lite@npm:^0.6.3":
+   version: 0.6.3
+diff --git a/settings/chrome-research.json b/settings/chrome-research.json
+new file mode 100644
+index 0000000..cf24147
+--- /dev/null
++++ b/settings/chrome-research.json
+@@ -0,0 +1,12 @@
++{
++  "buildType": "dev",
++  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsZdxi88QFzS6uT6dBRP4nbbpXIjogRCIf7r7AKzxKo728yop2kKZq0+jhaChFaLOGqDh2U+Jn76btCUDHGU2898LWLZhQ/AoiCfeEV7kzGtYgfFdEUxp30WuFJPxX3VGoxD566kEX0eKevlqeseTpgnVayYT2YRYqOBtp2CsY0IHQ7J+M2NqmdNs4CjeR8H7OsKZwbkPF5LziDgxR4C56vOtUfofMxRE5KKUDV7ZFObppU0UuzdOxcKLQ+EStkQNULQBLGMgzPco5yusqEX2j9yk3dM6MirpqLpKmWq/r1hGaso1BXspNYkjKYV8GCXCgP+bOR8CwJg1BhZd3VqegwIDAQAB",
++  "apiUrl": "https://hypothes.is/api/",
++  "authDomain": "hypothes.is",
++  "bouncerUrl": "https://hyp.is/",
++  "serviceUrl": "https://hypothes.is/",
++  "browserIsChrome": true,
++  "appType": "chrome-extension",
++  "localResearch": true,
++  "localResearchAuth": true
++}
+diff --git a/src/background/local-research.ts b/src/background/local-research.ts
+new file mode 100644
+index 0000000..bcbbea6
+--- /dev/null
++++ b/src/background/local-research.ts
+@@ -0,0 +1,297 @@
++/** Local persistence behind the original Hypothesis UI. Never expose the key to a page. */
++import { initSavedPageVisits } from './saved-page-visits';
++
++const BASE = 'http://127.0.0.1:8765';
++
++type ResearchMessage = {
++  type: 'local-research';
++  action: string;
++  uri?: string;
++  annotation?: Record<string, any>;
++  document?: Record<string, any>;
++  values?: Record<string, unknown>;
++  annotationId?: string;
++  name?: string;
++  force?: boolean;
++  approved?: boolean;
++  provider?: 'local' | 'codex';
++};
++
++function citationMetadata(document: Record<string, any> = {}) {
++  const highwire = document.highwire ?? {};
++  return {
++    title: highwire.title ?? document.title,
++    authors: highwire.author ?? document.dc?.creator,
++    institutions: highwire.author_institution ?? highwire.author_affiliation,
++    journal: highwire.journal_title,
++    doi: highwire.doi,
++    published: highwire.publication_date ?? highwire.date,
++    publisher: highwire.publisher,
++    abstract: highwire.abstract ?? document.dc?.description?.join(' '),
++    description: document.description,
++    arxiv_id: highwire.arxiv_id,
++  };
++}
++
++export async function handleResearchMessage(message: ResearchMessage) {
++  const preferences = await chrome.storage.local.get({
++    researchKey: '',
++    researchAutoTags: true,
++  });
++  if (!preferences.researchKey) {
++    throw new Error(
++      'Enter your local storage key in sidenote extension settings.',
++    );
++  }
++  async function request(path: string, body?: unknown) {
++    let response;
++    try {
++      response = await fetch(BASE + path, {
++        method: body === undefined ? 'GET' : 'POST',
++        headers: {
++          Authorization: `Bearer ${preferences.researchKey}`,
++          ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
++        },
++        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
++      });
++    } catch {
++      throw new Error('Start the local sidenote storage service, then retry.');
++    }
++    const result = await response.json();
++    if (!response.ok) {
++      throw new Error(result.error || 'Local storage request failed');
++    }
++    return result;
++  }
++  const uri = message.uri ?? message.annotation?.uri;
++  const ensureDocument = async () => {
++    if (typeof uri !== 'string') {
++      throw new Error('A source identifier is required');
++    }
++    const result = await request(
++      '/api/document?url=' + encodeURIComponent(uri),
++    );
++    if (result.document) {
++      return result.document;
++    }
++    return (
++      await request('/api/capture', {
++        url: uri,
++        metadata: citationMetadata(
++          message.document ?? message.annotation?.document,
++        ),
++      })
++    ).document;
++  };
++  switch (message.action) {
++    case 'dashboard':
++      await chrome.tabs.create({
++        url: chrome.runtime.getURL('client/notebook.html?local-library=1'),
++      });
++      return {};
++    case 'account':
++      return request('/api/account');
++    case 'status':
++      return request('/api/status');
++    case 'library':
++      return request('/api/library');
++    case 'recommendations':
++      return request('/api/recommendations');
++    case 'refresh-recommendations':
++      return request('/api/recommendations', {
++        approved: message.approved === true,
++      });
++    case 'research':
++      return request('/api/research', message.values);
++    case 'research-job':
++      return request('/api/research');
++    case 'wiki':
++      return request('/api/wiki');
++    case 'kura':
++      return request('/api/kura');
++    case 'kura-members':
++      return request(
++        '/api/kura?cluster_id=' +
++          encodeURIComponent(String(message.values?.cluster_id ?? '')) +
++          '&offset=' +
++          encodeURIComponent(String(message.values?.offset ?? 0)),
++      );
++    case 'graph':
++      return request(
++        '/api/graph?' +
++          new URLSearchParams({
++            query: String(message.values?.query ?? ''),
++            focus: String(message.values?.focus ?? ''),
++            depth: String(message.values?.depth ?? 1),
++            overview: String(message.values?.overview ?? false),
++          }).toString(),
++      );
++    case 'saved-urls':
++      return request('/api/saved-urls');
++    case 'visit':
++      return request('/api/visit', { url: uri });
++    case 'remove':
++    case 'restore':
++      return request(`/api/${message.action}`, { url: uri });
++    case 'groups':
++      return request('/api/groups');
++    case 'create-group':
++      return request('/api/groups', { name: message.name });
++    case 'organization':
++      return request('/api/organization');
++    case 'settings':
++      return request('/api/settings');
++    case 'save-settings':
++      return request('/api/settings', message.values);
++    case 'backup':
++      return request('/api/backup', {});
++    case 'enrich-library':
++      return request('/api/enrich-library', { force: message.force === true });
++    case 'enrich': {
++      const doc = await ensureDocument();
++      return request('/api/enrich', { document_id: doc.id, force: true });
++    }
++    case 'organize':
++      return request('/api/organize', {
++        force: message.force ?? false,
++        approved: message.approved === true,
++        ...(message.provider ? { provider: message.provider } : {}),
++      });
++    case 'document':
++      if (typeof uri !== 'string') {
++        throw new Error('A source identifier is required');
++      }
++      return request('/api/document?url=' + encodeURIComponent(uri));
++    case 'annotation':
++      return request('/api/annotation', {
++        annotation: message.annotation,
++        document: message.document,
++      });
++    case 'suggest':
++      if (!preferences.researchAutoTags && !message.force) {
++        return { analysis: { tags: [] } };
++      }
++      return request('/api/suggest', { annotation: message.annotation });
++    case 'capture':
++      return request('/api/capture', {
++        url: uri,
++        metadata: citationMetadata(message.document),
++        visit: true,
++      });
++    case 'suggest-page': {
++      const doc = await ensureDocument();
++      if (!preferences.researchAutoTags && !message.force) {
++        return { document: doc };
++      }
++      return request('/api/suggest-page', {
++        document_id: doc.id,
++        force: message.force ?? false,
++      });
++    }
++    case 'annotation-reaction':
++    case 'analyze-annotation': {
++      if (message.annotation) {
++        await request('/api/annotation', { annotation: message.annotation });
++      }
++      return request(
++        message.action === 'annotation-reaction'
++          ? '/api/annotation-reaction'
++          : '/api/analyze-annotation',
++        {
++          annotation_id: message.annotationId ?? message.annotation?.id,
++          ...(message.action === 'annotation-reaction'
++            ? { reaction: message.values?.reaction }
++            : {}),
++        },
++      );
++    }
++    case 'sync':
++      return request('/api/sync', { public_only: false });
++    case 'update': {
++      const doc = await ensureDocument();
++      return request('/api/update', {
++        document_id: doc.id,
++        values: message.values,
++      });
++    }
++    case 'analyze': {
++      const doc = await ensureDocument();
++      const status = await request('/api/status');
++      if (message.annotation?.user === `acct:${status.user}@hypothes.is`) {
++        await request('/api/annotation', {
++          annotation: message.annotation,
++          document: message.document,
++        });
++      }
++      return request('/api/analyze', { document_id: doc.id });
++    }
++    default:
++      throw new Error('Unsupported local research action');
++  }
++}
++
++export function initLocalResearch() {
++  if (!globalThis.chrome?.runtime?.onMessage) {
++    return;
++  }
++  initSavedPageVisits(chrome.tabs, {
++    savedURLs: async () =>
++      (
++        await handleResearchMessage({
++          type: 'local-research',
++          action: 'saved-urls',
++        })
++      ).urls,
++    record: async uri => {
++      await handleResearchMessage({
++        type: 'local-research',
++        action: 'visit',
++        uri,
++      });
++    },
++  });
++  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
++    if (message?.type !== 'local-research') {
++      return false;
++    }
++    const ownPage = sender.url?.startsWith(chrome.runtime.getURL(''));
++    const ownProfileScript = /^https:\/\/hypothes\.is\/users\//.test(
++      sender.url ?? '',
++    );
++    if (sender.id !== chrome.runtime.id || (!ownPage && !ownProfileScript)) {
++      sendResponse({ ok: false, error: 'Local research sender rejected' });
++      return false;
++    }
++    if (
++      [
++        'account',
++        'settings',
++        'save-settings',
++        'backup',
++        'remove',
++        'restore',
++        'organize',
++        'research',
++        'research-job',
++        'wiki',
++        'graph',
++        'kura',
++        'kura-members',
++        'recommendations',
++        'refresh-recommendations',
++      ].includes(message.action) &&
++      !ownPage
++    ) {
++      sendResponse({
++        ok: false,
++        error: 'Account access requires an extension page',
++      });
++      return false;
++    }
++    handleResearchMessage(message).then(
++      data => sendResponse({ ok: true, data }),
++      error => sendResponse({ ok: false, error: error.message }),
++    );
++    return true;
++  });
++}
+diff --git a/src/background/saved-page-visits.ts b/src/background/saved-page-visits.ts
+new file mode 100644
+index 0000000..0b7099e
+--- /dev/null
++++ b/src/background/saved-page-visits.ts
+@@ -0,0 +1,77 @@
++/** Record visits to saved pages only, without browser-history access. */
++export function initSavedPageVisits(
++  tabs: Pick<typeof chrome.tabs, 'get' | 'onActivated' | 'onUpdated'>,
++  bridge: {
++    savedURLs: () => Promise<string[]>;
++    record: (url: string) => Promise<void>;
++  },
++) {
++  if (!tabs?.onActivated || !tabs.onUpdated) {
++    return;
++  }
++  let urls = new Map<string, string>();
++  let loadedAt = 0;
++  let loading: Promise<void> | undefined;
++  const pending = new Set<string>();
++  const recent = new Map<string, number>();
++  const track = async (tab: chrome.tabs.Tab) => {
++    if (
++      tab.incognito ||
++      !tab.active ||
++      tab.status !== 'complete' ||
++      !tab.url?.match(/^https?:\/\//)
++    ) {
++      return;
++    }
++    try {
++      if (Date.now() - loadedAt >= 60_000) {
++        loading ??= bridge
++          .savedURLs()
++          .then(values => {
++            urls = new Map(values.map(value => [new URL(value).href, value]));
++            loadedAt = Date.now();
++          })
++          .finally(() => {
++            loading = undefined;
++          });
++        await loading;
++      }
++      const source = new URL(tab.url);
++      source.hash = '';
++      const url = source.href;
++      if (
++        !urls.has(url) ||
++        pending.has(url) ||
++        Date.now() - (recent.get(url) ?? 0) < 300_000
++      ) {
++        return;
++      }
++      pending.add(url);
++      try {
++        await bridge.record(urls.get(url)!);
++        recent.set(url, Date.now());
++        // Keep a bounded cache in long-lived service workers.
++        for (const [key, stamp] of recent) {
++          if (Date.now() - stamp >= 300_000) {
++            recent.delete(key);
++          }
++        }
++      } finally {
++        pending.delete(url);
++      }
++    } catch {
++      // An unavailable local bridge must not interfere with browsing.
++    }
++  };
++  tabs.onUpdated.addListener((_id, change, tab) => {
++    if (change.status === 'complete' || change.url) {
++      void track(tab);
++    }
++  });
++  tabs.onActivated.addListener(({ tabId }) => {
++    void tabs
++      .get(tabId)
++      .then(track)
++      .catch(() => {});
++  });
++}
+diff --git a/src/images/sidenote-active.png b/src/images/sidenote-active.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..c7cb6757f6cb3aeb907a3386d22c1d588a3a1de3
+GIT binary patch
+literal 485
+zcmV<B0UG{^P)<h;3K|Lk000e1NJLTq000vJ000vR1^@s6a!@wR0004+Nkl<Zc$}=1
+z%}WA76u{q1t3nYK6<ASrNlz&WT}mi|B<N7ktvYmwAd;@pAJE4!qK{LZ!dpl|mm=(g
+zZrPzzdy=peGSJ*C%i8JfDzdp7uIUd3X5X9n&D)vX;Q$$)U8(y@S8NahefZb{I$^*f
+zz=)qSe0z?z7h_~-X4S<+>P1m2{1e6?M5s8<fk>uH5lP7NMKZ-<w;#%bivj_2e$+ED
+z2xIPUC<;Q_u`)2_$IXqkm?Lt3WWWi%POEAzAB@1x{<$(_;xreL7s~Wwi8r|AL#i=x
+zA*qUK%g{t1W4pM%1HEX<L_BM$Nz_zVf~BcGmlKjH2tG#j%apG<Kk0^^u8v>%QO_ED
+ze5Uouq?)pY!TR1Y9GnJnxkU0^Q}m~dVp%j>+KYe(fK3kt_sn5ygHEgZ2e}VF!)1Uk
+zEK_1>ZUDPYEi)Q8eX__?9Kz9<+&}c+$W0F%?lg}_XHy0@y(dsK=%M%#_@FEh9~DHl
+zEZs*?3XDCZj8#kYYIi}vo6><ouY7YB<G}IKyb6P8Kiisn{Q&>~|Npy+WTF5700v1!
+bK~w_(wRe!jAUG$W00000NkvXXu0mjf3s%%I
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/images/sidenote-active@2x.png b/src/images/sidenote-active@2x.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..3fafcd020d06220797a96e029c99ca992bf99ec6
+GIT binary patch
+literal 782
+zcmV+p1M&QcP)<h;3K|Lk000e1NJLTq001Tc001Tk1^@s6s6FYf0008RNkl<Zc%1B*
+zOH30%7{~v!v;yUwz=;qsjRH|I1fr1miUc(#dNOE&7nGnUPgsn4(0J;BL=V154Ob1u
+zg9oAnBqS#2K}C&3BcN79X|S|NQMzr%Z)z$nY3(-MEgR)`*v#&J+x_i4zL|~zOW57q
+zQ6d@qC&BqffR%$`HMD@^BOTs=u@N5&T<YsQZ4bZABBWZZ4HCm`x?F%1!a1BI+VtS2
+z<vzm2s#|Xu3%TneII}PoDVst$PA|6RxJ%D<cQ^Vaak0oZTSGqW%OxcUzMFB2JAZsj
+z@O*#kd6UddFR5&XJ{U8y`AP#xH9|j90<&<EsBw2ff7BYp0Xl=m0f{kIswB8DKO3!w
+zcERcP;QFn8XbFvia#3UHN`mXE)?!<AS+LwQI1KxjZ_to*gW^czVrWLX@lV;5xe5(+
+z8<3NgspxmSvJa16jK=*i#bP4SL}N!y1x_5UM<P_1i*ez~U8o}#g9WdQM3Jf1;-OrO
+z=8R}Od@_RZ2?uf$Xv(oqj<|72H>Kdi=V_=-(oLxq|A1JGJ|<XGTtw+2Bj)`{#|)-j
+zb4Y}w`&fPLdbAzg_qQj5-_&&KDrROqP+u(OOS!6XAySeqCZ?QleV>OmVk_z5H~)9K
+z2q!cp$v!{S5sT5s#2W3)@dHSNzM<FX=<0zwVliqgFUN#LDagx;8<TV&8=!O{QEldC
+zD_>m<4Zn*Ur&#Q#*B4e^T!VRjEa2Y2GpLPXG4Yj^>q_X)$Q<mGny&YQu)Qr-vExz(
+zJ;C`~iGvM8X9y?Sb%O51gp(vg?jpsn&<o@uoTPr+*(qw%BhU!}uqNS@CQe45_q{h)
+zHx#gC-p8O6e!16XxhBdH^UR)O*3FR6NqYyIkW%=o08eY~wY5DBU5PpY(q8OA32Zw(
+zu$59t6|_(Z4m$pbX1c*%Tl<}*_kRHZ0RR6s#fxVE000I_L_t&o01VssIsORkx&QzG
+M07*qoM6N<$f?0)UV*mgE
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/images/sidenote-inactive.png b/src/images/sidenote-inactive.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..dfced798c70cb7252f8baa16c292d6e1d76af6ae
+GIT binary patch
+literal 476
+zcmV<20VDp2P)<h;3K|Lk000e1NJLTq000vJ000vR1^@s6a!@wR0004zNkl<Zc$}=1
+z%}WA77{;I3CdImB(Fc@hUl<fc5J6!SM3?AL*G?U})!n?5mr|lr^f!2wAn*{<At)k<
+zC@Aa@goY)VLVkp1)9fl{uHtU`gPEOu-<@ZleP4DcI2#U!o~1Ph1eoTxols7Y0VkwB
+zweGapBE-72XCZaO#S;enA3w{mWl99BRw)E&zd%+f2xd?V2(t(bq@y^#I6sT2i7}{y
+zm?$s0wm96ZZvr7iT2GFTVrZaWw$=X}gvWdOE5&sv%D+jPW3dDtpZv0HES`|XN{WfD
+za>j6T=Yvv8iZRBdA=22OLwjpWK9@*-;wAK^TrB5LnwJ*lFlg@kli76cBc1+IBbIgM
+zK03zP#Z^8U=gvwAl@-g@EbA<uNb&{*poEGw>opnBZS0ag^BM}{_Wq%=SRrk^_&rAX
+z-$p4_CKi5=A{>cI>+{QNX()m65AyK}nG1u59xv1)>InSmMs08lOq<!^3qPuWH!Gm~
+z)@=*BR_h1qQzN{0;sF_iI>eLKMKtMQyL~P80{{U3|2W$^od5s;21!IgR09CjAA=%w
+STukHu0000<MNUMnLSTYX56`Rs
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/images/sidenote-inactive@2x.png b/src/images/sidenote-inactive@2x.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..12716ef5c52c0de977682ad7ae5657a02920ec26
+GIT binary patch
+literal 802
+zcmV+-1Ks?IP)<h;3K|Lk000e1NJLTq001Tc001Tk1^@s6s6FYf0008lNkl<Zc%1B*
+zO=uHA7>3{3Zd;QyLRCbh8mVHVp$$dRf+F#t^-%Fra<E>!c$6YF9%@TUr8H8Do-|$r
+z4??LPiXN&L6%-Mv#1>KmR#Cy`uTh#rTf50P(_&nMX*OgxUDSsVW@f+LeRgJcW_Cnm
+z(Rtz0CMk{6ptPP4SOH>zCeZhk;xz&MG%a5C^t6AFA0_gPt7qVlKrqCLt5HIjV2lW)
+zt-tHcDCA<Nyx#IP!9*`5aFHz8lF2RoJa4U=&ksADDS;QR4bARmI_FkOio@?sC|tGv
+zk9!yMZnxL?O^A;Zkgd=G6m-gvHaCcKLc*yRDGqnxP6F$B4(JT_GBgRS!#6>1Fej1y
+zZ&4Dv+FXT}W(VT&B<|jS2#v9d>}{x25^1w;L;a5Ji|OZMuMm#LpcULnR2p0^{tB(A
+zD9@xTD=V<eZiCUVO3`%|Bngv&sk{%SSd5J_@=PXWx7Fcj^Fb7XrDh{;4vjz^u^fC~
+zkWeU+l*${UT#UWLvP>rBo0!COC<2q>rcB{eFq}88=%(a^!cnMA(M_ope}PzzKE~Ow
+ze%-ReMKtyWv+)G95zEoX8XI=PdF;rtr}D?>8@z@@@+;IA%XL#qp#>!wE+R9Z3#zTc
+z#QqN#OZ?lzg&aO5O|vOUN~Kg1%hAX98tr&%3ku=oxF5qKqfkdIM~#_GMih#<%9J;z
+z=sw1W3tpKfqd`$TUnu(7LNOnT#pLTQd3tVs9?xF*pf-xd{DC*9wbUS<NFp4Wf!2uZ
+z%QwJ2GVAgM@=5sCoqH$++({smsNW7n!kyR$FV&qGcM{6V#2ajd5QI+PF5F4z>ue8E
+zkQ2}eM4)Zlsf=fyK6>zOpW|>fA!J4OF<5O~@pPZP%G1AZb-D-lFyrg2(2f$q=8*{k
+zda}Q}W9(<yA9oO4y#uWzjRUL(_p@vxw2-0H$FBb*P3Yr`T^+ZxkN*Gw0RR8rX5xDQ
+g000I_L_t&o0BCv$_-ZMsA^-pY07*qoM6N<$g4Gmu0{{R3
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/images/sidenote.svg b/src/images/sidenote.svg
+new file mode 100644
+index 0000000..9bc568c
+--- /dev/null
++++ b/src/images/sidenote.svg
+@@ -0,0 +1,4 @@
++<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 32 32" fill="none">
++  <rect width="32" height="32" rx="7" fill="#48658a"/>
++  <path d="M10 8v16M15 10h9M15 16h6M15 22h9" stroke="#fff" stroke-width="2.25" stroke-linecap="round"/>
++</svg>
+diff --git a/src/images/sidenote128.png b/src/images/sidenote128.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..894edd654428a915059499027fd9ca67fb6d6d08
+GIT binary patch
+literal 1983
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/images/sidenote16.png b/src/images/sidenote16.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..5fd82cc3c9a3812666ea6d7ea304ac257902626d
+GIT binary patch
+literal 331
+zcmV-R0kr;!P)<h;3K|Lk000e1NJLTq000mG000mO1^@s6AM^iV00031Nkl<Zc$}<L
+zuZw~~5Pfs(`Q35fUAk~w@!B<m-C)un{uKr>*~D%U1+!?d7;GX2lLo=229rOE2qu#V
+zDhlH&DC-aQ(+?l)&hlX1@OEYdz~l?1A^^f5{1fmB4H(#fc|^qdS}vB6$;l`YWnc%4
+zxS)My`v?mV{i%%e_xljX)0uTT;YY||sGQ&9I>c<Lj-c0#FZ2B@r`hhS;)c)_`22Xg
+z;w}ZX0>x?zR?rHl7Uqj3Dvi!#0;+{ub}R*+YT<~BF5vlHXmy9D_k9)^V>waIBhed7
+za5tFyFY+$HCYVqbD~FjjHjBO4fIM=YN&7Dh-pVBy$?CPW!%XY|00960!}jf(00006
+dNkl<Z0|16=Nhw*|%4h%p002ovPDHLkV1ntFkWT;r
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/images/sidenote48.png b/src/images/sidenote48.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..7e3af1a86c39c94d7da17dd521d08d864603382b
+GIT binary patch
+literal 793
+zcmV+!1LpjRP)<h;3K|Lk000e1NJLTq001xm001xu1^@s6R|5Hm0008cNkl<Zc%1B-
+zO=uHA6vzKFyGh!DR0IXTpdgA=B(;LJNVO;$+lxJT=&eGkcoPq{lwLdu?V*Ynt0pL(
+zJctkllX~z2g{GI9Ts&E*_yM*DD?-y`n~ZN(Qc~I4?zYKhV1E$iF`2;o&wD#>W+ysU
+zAQT=t!oZFRh9)o(Bs+)-A|TRCASHkl7lpU+=)ec7aqQoY_6s*R*XX%hV5|pKf*>`F
+zi8~91fAG!2t8=B_EfWw551*ykjxxq}pb8N}d?zX4v1nhS*taC$^rhi5n!p$oKornX
+z6k!UGX%q0}K2n}<hXTk*_<3gU^Ly9lx$Fq&#;7XJOJs^0qHe^rL*bDvj2p9Lawvr;
+z7}@+bE?^v2&v^;snon!f8E5TK6q@!Ho!S;C3O%<{fY@(Q&;CpOraE+Y{?+~XMH0V$
+z&%+I<zBTEjq8>Imcd{8>rw*HTW+8`1vG;HT>AMaGH0<1JX}f_V0jtpx+=Gs`AZly;
+zu*=k!8Cz+&;R0#{J`7&&g04ARnGf#UZ7VIy5&<gps1zG6Ad@w4<8BO{Cz?>>_rWfo
+zKL0@M)#RGTmn8zp^pyFj1Z5FWNjw2=;|Z{0t%Xdk_wje>bv^K|7qUZ*4LE=0Hgd)y
+zoZxyPqvIhoZf`eSimQdJm_qV5PVowv+js)p#uH$LcOvsnWb42?k=eviqE3ICwY1&9
+zQ3Pa&<qA_M6l{gN9I(*E;Uw(^k3vCcshE%(*%TConOCq7$_kLab5fwJ0O>oANBSmY
+zE<rJ9_FqfiX&GgLY58vI`Uyp#LO&-o-YtDM>p)_3V45WLLJ=4fJugSE%}9HxkR>Ah
+zPvs4`d7WRSNZ+K7iTnM}ihau}vAn*|bJ0j6pP<Sh=O1Jj{Rc|_Cm~t!eMU#`(5^gf
+z?dh#YD+Ft$wwbyEs0>-k^GQnaacajk+Fr#Y{a>vH{s900|Np(j>E{3d00v1!K~w_(
+XGjuI92AWd$00000NkvXXu0mjfF>z<`
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/research/profile.js b/src/research/profile.js
+new file mode 100644
+index 0000000..608cc9b
+--- /dev/null
++++ b/src/research/profile.js
+@@ -0,0 +1,143 @@
++/* Extend the original Hypothesis profile in place. Preserve its DOM and styling. */
++(async () => {
++  /** @param {string} action @param {Record<string, unknown>} values */
++  const request = async (action, values = {}) => {
++    const result = await chrome.runtime.sendMessage({
++      type: 'local-research',
++      action,
++      ...values,
++    });
++    if (!result?.ok) {
++      throw new Error(result?.error || 'Local storage unavailable');
++    }
++    return result.data;
++  };
++  try {
++    const status = await request('status');
++    if (decodeURIComponent(location.pathname.split('/')[2]) !== status.user) {
++      return;
++    }
++    const library = await request('library');
++    const annotations = new Map();
++    for (const doc of library.documents) {
++      for (const id of doc.annotation_ids ?? []) {
++        annotations.set(id, doc);
++      }
++    }
++    const enhance = () => {
++      for (const bucket of Array.from(
++        document.querySelectorAll('.search-result-bucket'),
++      )) {
++        if (bucket.hasAttribute('data-local-research')) {
++          continue;
++        }
++        const title = bucket.querySelector('.search-result-bucket__title');
++        const row = bucket.querySelector(
++          '.search-result-bucket__title-and-annotations-count',
++        );
++        if (!(title instanceof HTMLElement) || !row) {
++          continue;
++        }
++        let doc;
++        for (const link of Array.from(bucket.querySelectorAll('a[href]'))) {
++          if (!(link instanceof HTMLAnchorElement)) {
++            continue;
++          }
++          const parsed = new URL(link.href);
++          if (parsed.hostname === 'hyp.is') {
++            doc = annotations.get(parsed.pathname.split('/')[1]);
++          }
++          doc ??= library.documents.find(
++            /** @param {{url: string}} item */ item => item.url === link.href,
++          );
++          if (doc) {
++            break;
++          }
++        }
++        if (!doc) {
++          continue;
++        }
++        bucket.setAttribute('data-local-research', '');
++        const original = title.textContent?.trim() ?? '';
++        title.textContent = doc.custom_title || original;
++        if (doc.custom_title) {
++          title.title = `Personal title. Original: ${original}`;
++        }
++        const edit = document.createElement('button');
++        edit.type = 'button';
++        edit.title = 'Edit personal title';
++        edit.setAttribute('aria-label', 'Edit personal title');
++        edit.className = 'search-result-bucket__edit-title';
++        edit.style.cssText =
++          'border:0;background:transparent;color:#666;cursor:pointer;padding:4px;vertical-align:middle';
++        edit.innerHTML =
++          '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m16 3 5 5L8 21H3v-5Z"/><path d="m14 5 5 5"/></svg>';
++        row.insertBefore(edit, title.nextSibling);
++        edit.addEventListener('click', () => {
++          if (row.querySelector('form[data-local-title]')) {
++            return;
++          }
++          const form = document.createElement('form');
++          form.setAttribute('data-local-title', '');
++          form.style.cssText =
++            'display:inline-flex;align-items:center;gap:4px;max-width:100%';
++          const input = document.createElement('input');
++          input.value = doc.custom_title || original;
++          input.setAttribute('aria-label', 'Personal title');
++          input.maxLength = 1000;
++          input.style.cssText =
++            'font:inherit;border:1px solid #ccc;padding:4px;width:32ch;max-width:100%';
++          const save = document.createElement('button');
++          save.textContent = 'Save';
++          save.type = 'submit';
++          save.className = 'btn btn-primary';
++          const cancel = document.createElement('button');
++          cancel.textContent = 'Cancel';
++          cancel.type = 'button';
++          cancel.className = 'btn';
++          const error = document.createElement('span');
++          error.setAttribute('role', 'alert');
++          const close = () => {
++            form.remove();
++            title.hidden = false;
++            edit.hidden = false;
++          };
++          cancel.addEventListener('click', close);
++          form.addEventListener('submit', async event => {
++            event.preventDefault();
++            save.disabled = true;
++            try {
++              const result = await request('update', {
++                uri: doc.url,
++                values: { title: input.value.trim() },
++              });
++              doc.custom_title = input.value.trim();
++              title.textContent = result.document.title;
++              title.title = doc.custom_title
++                ? `Personal title. Original: ${original}`
++                : original;
++              close();
++            } catch (failure) {
++              error.textContent =
++                failure instanceof Error ? failure.message : 'Saving failed';
++              save.disabled = false;
++            }
++          });
++          form.append(input, save, cancel, error);
++          title.hidden = true;
++          edit.hidden = true;
++          row.prepend(form);
++          input.focus();
++          input.select();
++        });
++      }
++    };
++    enhance();
++    new MutationObserver(enhance).observe(document.body, {
++      childList: true,
++      subtree: true,
++    });
++  } catch {
++    // The normal Hypothesis profile remains usable when local storage is offline.
++  }
++})();
+diff --git a/tests/background/local-research-test.js b/tests/background/local-research-test.js
+new file mode 100644
+index 0000000..76d39b1
+--- /dev/null
++++ b/tests/background/local-research-test.js
+@@ -0,0 +1,210 @@
++import {
++  handleResearchMessage,
++  initLocalResearch,
++} from '../../src/background/local-research';
++
++describe('local research account boundary', () => {
++  let fakeChrome;
++  let fetchStub;
++  let originalChrome;
++
++  beforeEach(() => {
++    fakeChrome = {
++      runtime: {
++        id: 'local-extension-id',
++        getURL: path => `chrome-extension://local-extension-id/${path}`,
++        onMessage: { addListener: sinon.stub() },
++      },
++      storage: {
++        local: { get: sinon.stub().resolves({ researchKey: 'bridge-key' }) },
++      },
++    };
++    originalChrome = Object.getOwnPropertyDescriptor(globalThis, 'chrome');
++    Object.defineProperty(globalThis, 'chrome', {
++      value: fakeChrome,
++      configurable: true,
++    });
++    fetchStub = sinon
++      .stub(globalThis, 'fetch')
++      .resolves(
++        new Response(JSON.stringify({ access_token: 'synthetic-token' })),
++      );
++  });
++
++  afterEach(() => {
++    sinon.restore();
++    if (originalChrome) {
++      Object.defineProperty(globalThis, 'chrome', originalChrome);
++    } else {
++      delete globalThis.chrome;
++    }
++  });
++
++  it('rejects account access from a profile content script', () => {
++    initLocalResearch();
++    const listener = fakeChrome.runtime.onMessage.addListener.firstCall.args[0];
++    const reply = sinon.spy();
++    listener(
++      { type: 'local-research', action: 'account' },
++      { id: fakeChrome.runtime.id, url: 'https://hypothes.is/users/luke_ai' },
++      reply,
++    );
++    assert.equal(reply.firstCall.args[0].ok, false);
++    assert.notCalled(fetchStub);
++  });
++
++  for (const action of [
++    'settings',
++    'save-settings',
++    'backup',
++    'remove',
++    'restore',
++    'research',
++    'research-job',
++    'wiki',
++    'graph',
++    'kura',
++    'kura-members',
++    'recommendations',
++    'refresh-recommendations',
++  ]) {
++    it(`rejects ${action} access from a profile content script`, () => {
++      initLocalResearch();
++      const listener =
++        fakeChrome.runtime.onMessage.addListener.firstCall.args[0];
++      const reply = sinon.spy();
++      listener(
++        { type: 'local-research', action },
++        { id: fakeChrome.runtime.id, url: 'https://hypothes.is/users/reader' },
++        reply,
++      );
++      assert.equal(reply.firstCall.args[0].ok, false);
++      assert.notCalled(fetchStub);
++    });
++  }
++
++  for (const action of ['remove', 'restore']) {
++    it(`forwards ${action} without capturing or publishing the source`, async () => {
++      await handleResearchMessage({
++        type: 'local-research',
++        action,
++        uri: 'https://example.org/paper',
++      });
++      assert.calledOnce(fetchStub);
++      const [url, options] = fetchStub.firstCall.args;
++      assert.equal(url, `http://127.0.0.1:8765/api/${action}`);
++      assert.equal(options.method, 'POST');
++      assert.deepEqual(JSON.parse(options.body), {
++        url: 'https://example.org/paper',
++      });
++    });
++  }
++
++  it('sends settings only to the authenticated local bridge', async () => {
++    const values = {
++      preferences: { backup_enabled: true, backup_time: '04:30' },
++      api_keys: { OPENALEX_API_KEY: 'synthetic-write-only-key' },
++    };
++    await handleResearchMessage({
++      type: 'local-research',
++      action: 'save-settings',
++      values,
++    });
++    assert.calledOnce(fetchStub);
++    const [url, options] = fetchStub.firstCall.args;
++    assert.equal(url, 'http://127.0.0.1:8765/api/settings');
++    assert.equal(options.method, 'POST');
++    assert.deepEqual(JSON.parse(options.body), values);
++  });
++
++  it('reads cached recommendations and forwards explicit refresh approval', async () => {
++    fetchStub.callsFake(async () => new Response('{}'));
++    await handleResearchMessage({
++      type: 'local-research',
++      action: 'recommendations',
++    });
++    assert.equal(
++      fetchStub.firstCall.args[0],
++      'http://127.0.0.1:8765/api/recommendations',
++    );
++    assert.equal(fetchStub.firstCall.args[1].method, 'GET');
++    await handleResearchMessage({
++      type: 'local-research',
++      action: 'refresh-recommendations',
++      approved: true,
++    });
++    assert.deepEqual(JSON.parse(fetchStub.secondCall.args[1].body), {
++      approved: true,
++    });
++  });
++
++  it('forwards an explicit research request through the paired worker', async () => {
++    const values = {
++      operation: 'ask',
++      query: 'social networks',
++      web: true,
++      approved: true,
++    };
++    await handleResearchMessage({
++      type: 'local-research',
++      action: 'research',
++      values,
++    });
++    const [url, options] = fetchStub.firstCall.args;
++    assert.equal(url, 'http://127.0.0.1:8765/api/research');
++    assert.deepEqual(JSON.parse(options.body), values);
++    assert.equal(options.headers.Authorization, 'Bearer bridge-key');
++  });
++
++  it('rejects account access from another extension', () => {
++    initLocalResearch();
++    const listener = fakeChrome.runtime.onMessage.addListener.firstCall.args[0];
++    const reply = sinon.spy();
++    listener(
++      { type: 'local-research', action: 'account' },
++      { id: 'other', url: 'chrome-extension://other/client/app.html' },
++      reply,
++    );
++    assert.equal(reply.firstCall.args[0].ok, false);
++    assert.notCalled(fetchStub);
++  });
++
++  it('requires pairing before requesting account credentials', async () => {
++    fakeChrome.storage.local.get.resolves({ researchKey: '' });
++    let error;
++    try {
++      await handleResearchMessage({
++        type: 'local-research',
++        action: 'account',
++      });
++    } catch (err) {
++      error = err;
++    }
++    assert.match(error.message, /local storage key/);
++    assert.notCalled(fetchStub);
++  });
++
++  it('allows an extension page to use the paired account', async () => {
++    initLocalResearch();
++    const listener = fakeChrome.runtime.onMessage.addListener.firstCall.args[0];
++    const response = await new Promise(resolve => {
++      listener(
++        { type: 'local-research', action: 'account' },
++        {
++          id: fakeChrome.runtime.id,
++          url: 'chrome-extension://local-extension-id/client/app.html',
++        },
++        resolve,
++      );
++    });
++    assert.deepEqual(response, {
++      ok: true,
++      data: { access_token: 'synthetic-token' },
++    });
++    assert.calledWith(
++      fetchStub,
++      'http://127.0.0.1:8765/api/account',
++      sinon.match({ headers: { Authorization: 'Bearer bridge-key' } }),
++    );
++  });
++});
+diff --git a/tests/background/saved-page-visits-test.js b/tests/background/saved-page-visits-test.js
+new file mode 100644
+index 0000000..736762f
+--- /dev/null
++++ b/tests/background/saved-page-visits-test.js
+@@ -0,0 +1,77 @@
++import { initSavedPageVisits } from '../../src/background/saved-page-visits';
++
++describe('saved page visit tracking', () => {
++  let tabs;
++  let bridge;
++  let clock;
++  let update;
++  let activate;
++  const page = {
++    id: 1,
++    active: true,
++    status: 'complete',
++    url: 'https://example.org/saved#section',
++  };
++  beforeEach(() => {
++    clock = sinon.useFakeTimers({ now: Date.parse('2026-10-22T10:00:00Z') });
++    tabs = {
++      get: sinon.stub().resolves(page),
++      onUpdated: { addListener: sinon.stub() },
++      onActivated: { addListener: sinon.stub() },
++    };
++    bridge = {
++      savedURLs: sinon.stub().resolves(['https://example.org/saved']),
++      record: sinon.stub().resolves(),
++    };
++    initSavedPageVisits(tabs, bridge);
++    update = tabs.onUpdated.addListener.firstCall.args[0];
++    activate = tabs.onActivated.addListener.firstCall.args[0];
++  });
++  afterEach(() => clock.restore());
++  it('records a saved page without needing the annotation sidebar', async () => {
++    update(1, { status: 'complete' }, page);
++    await clock.tickAsync(0);
++    assert.calledOnceWithExactly(bridge.record, 'https://example.org/saved');
++  });
++  it('counts tab returns but coalesces duplicate loads and activations for five minutes', async () => {
++    update(1, { status: 'complete' }, page);
++    activate({ tabId: 1 });
++    await clock.tickAsync(0);
++    assert.calledOnce(bridge.record);
++    await clock.tickAsync(300_000);
++    activate({ tabId: 1 });
++    await clock.tickAsync(0);
++    assert.calledTwice(bridge.record);
++  });
++  it('never records unknown pages, incognito tabs, browser pages, or background loads', async () => {
++    for (const values of [
++      { url: 'https://example.org/unknown' },
++      { incognito: true },
++      { active: false },
++      { status: 'loading' },
++      { url: 'chrome://extensions' },
++    ]) {
++      update(1, { status: 'complete' }, { ...page, ...values });
++    }
++    await clock.tickAsync(0);
++    assert.notCalled(bridge.record);
++  });
++  it('refreshes the saved-page index so newly saved pages can be tracked', async () => {
++    bridge.savedURLs.onFirstCall().resolves([]);
++    update(1, { status: 'complete' }, page);
++    await clock.tickAsync(0);
++    assert.notCalled(bridge.record);
++    await clock.tickAsync(60_000);
++    update(1, { status: 'complete' }, page);
++    await clock.tickAsync(0);
++    assert.calledOnce(bridge.record);
++  });
++  it('recovers after an unavailable local bridge without recording unrelated URLs', async () => {
++    bridge.savedURLs.onFirstCall().rejects(new Error('Offline'));
++    update(1, { status: 'complete' }, page);
++    await clock.tickAsync(0);
++    update(1, { status: 'complete' }, page);
++    await clock.tickAsync(0);
++    assert.calledOnce(bridge.record);
++  });
++});

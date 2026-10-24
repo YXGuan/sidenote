@@ -1,0 +1,400 @@
+{
+  "version": 2,
+  "description": "Local subject taxonomy. Source format (paper, blog, video) is independent of subject. Unknown is preferable to a generic research label.",
+  "topics": {
+    "computer science": {
+      "terms": [
+        "computer science",
+        "artificial intelligence",
+        "machine learning",
+        "large language model",
+        "neural network",
+        "deep learning",
+        "natural language processing",
+        "llm",
+        "computer vision",
+        "reinforcement learning",
+        "ai"
+      ],
+      "subtopics": {
+        "machine learning": [
+          "machine learning",
+          "neural network",
+          "deep learning",
+          "reinforcement learning",
+          "representation learning"
+        ],
+        "language models": [
+          "language model",
+          "llm",
+          "transformer architecture",
+          "retrieval augmented",
+          "instruction tuning",
+          "chain of thought",
+          "attention mechanism"
+        ],
+        "natural language processing": [
+          "natural language processing",
+          "text classification",
+          "sentiment analysis",
+          "topic modeling",
+          "topic modelling",
+          "computational linguistics"
+        ],
+        "human computer interaction": [
+          "human computer interaction",
+          "human-computer interaction",
+          "hci",
+          "user interface",
+          "human ai interaction",
+          "human-ai interaction",
+          "user study"
+        ],
+        "ai evaluation and safety": [
+          "ai safety",
+          "alignment",
+          "red teaming",
+          "model evaluation",
+          "benchmarking language",
+          "hallucination"
+        ]
+      }
+    },
+    "social science": {
+      "terms": [
+        "sociology",
+        "social science",
+        "social network",
+        "political science",
+        "social behavior",
+        "social behaviour",
+        "behavioral change",
+        "behavioural change",
+        "interpersonal ties",
+        "social structure",
+        "micro-level interactions",
+        "macro-level patterns"
+      ],
+      "subtopics": {
+        "computational social science": [
+          "computational social science",
+          "computational sociology",
+          "social network analysis",
+          "social simulation",
+          "agent based modeling",
+          "agent-based model"
+        ],
+        "psychology": [
+          "psychology",
+          "psychological",
+          "cognitive science",
+          "cognition",
+          "behavioral science",
+          "behavioural science",
+          "social cognition"
+        ],
+        "social networks": [
+          "social network",
+          "network science",
+          "community detection",
+          "information diffusion",
+          "social media",
+          "weak ties",
+          "interpersonal ties",
+          "social structure"
+        ]
+      }
+    },
+    "research": {
+      "terms": [
+        "research methodology",
+        "research methods",
+        "reproducibility",
+        "meta-analysis",
+        "systematic review",
+        "scientometrics",
+        "bibliometrics"
+      ],
+      "subtopics": {
+        "statistics and causal inference": [
+          "statistics",
+          "statistical",
+          "causal inference",
+          "bayesian",
+          "randomized controlled",
+          "randomised controlled"
+        ],
+        "scholarly communication": [
+          "scientometrics",
+          "bibliometrics",
+          "research publications",
+          "citation analysis",
+          "open science",
+          "peer review"
+        ]
+      }
+    },
+    "technology": {
+      "terms": [
+        "technology",
+        "software",
+        "programming",
+        "cybersecurity"
+      ],
+      "subtopics": {
+        "software engineering": [
+          "programming",
+          "software engineering",
+          "python",
+          "javascript",
+          "typescript",
+          "api documentation",
+          "react",
+          "database",
+          "distributed systems"
+        ],
+        "security": [
+          "cybersecurity",
+          "information security",
+          "vulnerability",
+          "encryption"
+        ]
+      }
+    },
+    "philosophy": {
+      "terms": [
+        "philosophy",
+        "philosophical",
+        "epistemology",
+        "ethics",
+        "metaphysics"
+      ],
+      "subtopics": {
+        "ethics": [
+          "ethics",
+          "moral philosophy",
+          "ethical"
+        ],
+        "epistemology": [
+          "epistemology",
+          "justified belief",
+          "theory of knowledge"
+        ]
+      }
+    },
+    "religion": {
+      "terms": [
+        "theology",
+        "theological",
+        "christian",
+        "christianity",
+        "bible",
+        "biblical",
+        "scripture",
+        "gospel",
+        "religion",
+        "sermon",
+        "church"
+      ],
+      "subtopics": {
+        "biblical studies": [
+          "bible",
+          "biblical",
+          "scripture",
+          "old testament",
+          "new testament",
+          "exegesis"
+        ],
+        "christian theology": [
+          "theology",
+          "theological",
+          "christian",
+          "salvation",
+          "atonement",
+          "divine"
+        ]
+      }
+    },
+    "finance": {
+      "terms": [
+        "finance",
+        "financial",
+        "investing",
+        "investment",
+        "stock market",
+        "portfolio",
+        "interest rate",
+        "inflation",
+        "banking",
+        "cryptocurrency"
+      ],
+      "subtopics": {
+        "investing": [
+          "investing",
+          "investment",
+          "index fund",
+          "stock market",
+          "portfolio"
+        ],
+        "cryptocurrency": [
+          "cryptocurrency",
+          "bitcoin",
+          "blockchain"
+        ]
+      }
+    },
+    "economics": {
+      "terms": [
+        "economics",
+        "economic",
+        "labor market",
+        "labour market",
+        "monetary policy",
+        "economic inequality"
+      ],
+      "subtopics": {}
+    },
+    "education": {
+      "terms": [
+        "education",
+        "teaching",
+        "curriculum",
+        "lifelong learning",
+        "course notes",
+        "pedagogy",
+        "student",
+        "classroom"
+      ],
+      "subtopics": {
+        "learning and memory": [
+          "lifelong learning",
+          "learning practice",
+          "spaced repetition",
+          "note taking",
+          "retrieval practice"
+        ]
+      }
+    },
+    "health": {
+      "terms": [
+        "health",
+        "medical",
+        "medicine",
+        "clinical",
+        "disease",
+        "patient",
+        "nutrition",
+        "therapy"
+      ],
+      "subtopics": {
+        "mental health": [
+          "mental health",
+          "depression",
+          "anxiety",
+          "psychotherapy"
+        ],
+        "clinical medicine": [
+          "clinical trial",
+          "patient",
+          "treatment",
+          "diagnosis"
+        ]
+      }
+    },
+    "politics": {
+      "terms": [
+        "politics",
+        "political",
+        "election",
+        "government",
+        "public policy",
+        "legislation",
+        "democracy"
+      ],
+      "subtopics": {
+        "public policy": [
+          "public policy",
+          "legislation",
+          "regulation"
+        ]
+      }
+    },
+    "science": {
+      "terms": [
+        "physics",
+        "biology",
+        "chemistry",
+        "astronomy",
+        "climate",
+        "ecology",
+        "quantum"
+      ],
+      "subtopics": {
+        "climate": [
+          "climate",
+          "global warming",
+          "carbon emissions"
+        ],
+        "physics": [
+          "physics",
+          "quantum",
+          "astrophysics"
+        ],
+        "biology": [
+          "biology",
+          "genome",
+          "genetic",
+          "evolution",
+          "neuroscience"
+        ]
+      }
+    },
+    "sports": {
+      "terms": [
+        "sports",
+        "football",
+        "soccer",
+        "basketball",
+        "tennis",
+        "baseball",
+        "hockey",
+        "olympics",
+        "athlete"
+      ],
+      "subtopics": {
+        "basketball": [
+          "basketball",
+          "nba"
+        ],
+        "football": [
+          "football",
+          "soccer",
+          "nfl"
+        ]
+      }
+    },
+    "arts": {
+      "terms": [
+        "art history",
+        "painting",
+        "music",
+        "literature",
+        "cinema",
+        "poetry",
+        "photography"
+      ],
+      "subtopics": {}
+    },
+    "business": {
+      "terms": [
+        "business",
+        "startup",
+        "entrepreneur",
+        "marketing",
+        "management",
+        "supply chain"
+      ],
+      "subtopics": {}
+    }
+  }
+}

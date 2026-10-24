@@ -1,0 +1,90 @@
+{
+  "version": "proposal-1",
+  "status": "Experimental subset for a diagnostic trial, not a replacement for the active taxonomy",
+  "paths": [
+    {
+      "id": "llm.alignment.sycophancy.social",
+      "primary_topic": ["Artificial Intelligence", "Machine Learning", "Large Language Models (LLMs)"],
+      "research_area": "LLM Alignment, Safety, and Evaluation",
+      "specific_topic": ["Model Sycophancy", "Social Sycophancy & Behavioral Biases"],
+      "definition": "LLMs flatter or affirm a user's self-image, decisions or interpersonal behavior; includes social harms and preference/training incentives. Excludes human-only flattery and unrelated model biases."
+    },
+    {
+      "id": "llm.alignment.sycophancy",
+      "primary_topic": ["Artificial Intelligence", "Machine Learning", "Large Language Models (LLMs)"],
+      "research_area": "LLM Alignment, Safety, and Evaluation",
+      "specific_topic": ["Model Sycophancy"],
+      "definition": "LLMs agree with user beliefs or preferences at the expense of independent, accurate or appropriate responses; social/self-image framing is not established."
+    },
+    {
+      "id": "llm.alignment.hallucination",
+      "primary_topic": ["Artificial Intelligence", "Machine Learning", "Large Language Models (LLMs)"],
+      "research_area": "LLM Alignment, Safety, and Evaluation",
+      "specific_topic": ["Hallucination & Factual Reliability"],
+      "definition": "Unsupported or fabricated model claims and their evaluation or mitigation. A user-pleasing model need not hallucinate facts."
+    },
+    {
+      "id": "llm.alignment",
+      "primary_topic": ["Artificial Intelligence", "Machine Learning", "Large Language Models (LLMs)"],
+      "research_area": "LLM Alignment, Safety, and Evaluation",
+      "specific_topic": [],
+      "definition": "LLM alignment, harmful behavior, safety, robustness or behavioral evaluation without evidence for a more specific listed concept. Routine capability benchmarking alone is insufficient."
+    },
+    {
+      "id": "llm.capabilities",
+      "primary_topic": ["Artificial Intelligence", "Machine Learning", "Large Language Models (LLMs)"],
+      "research_area": "LLM Capabilities and Evaluation",
+      "specific_topic": [],
+      "definition": "Evaluation of language-model task abilities, such as arithmetic accuracy, without a substantive safety/alignment contribution."
+    },
+    {
+      "id": "llm",
+      "primary_topic": ["Artificial Intelligence", "Machine Learning", "Large Language Models (LLMs)"],
+      "research_area": null,
+      "specific_topic": [],
+      "definition": "Language models are the central subject but no listed research area is established, for example inference engineering."
+    },
+    {
+      "id": "ai",
+      "primary_topic": ["Artificial Intelligence"],
+      "research_area": null,
+      "specific_topic": [],
+      "definition": "AI is central but the evidence does not establish a language-model-specific or other listed path."
+    },
+    {
+      "id": "nlp.sentiment",
+      "primary_topic": ["Computer Science", "Natural Language Processing"],
+      "research_area": "Text Classification",
+      "specific_topic": ["Sentiment Analysis"],
+      "definition": "Computational classification of sentiment in text; do not infer LLMs from NLP alone."
+    },
+    {
+      "id": "psychology.social",
+      "primary_topic": ["Social Science", "Psychology"],
+      "research_area": "Social Psychology",
+      "specific_topic": [],
+      "definition": "Human judgment, relationships, conformity, interpersonal behavior or experimentally measured social outcomes. Often secondary for studies centered on AI behavior."
+    },
+    {
+      "id": "hci.human-ai",
+      "primary_topic": ["Computer Science", "Human-Computer Interaction"],
+      "research_area": "Human-AI Interaction",
+      "specific_topic": [],
+      "definition": "Empirical or design study of people using AI systems, including trust and reliance. Merely testing model outputs without human interaction is insufficient."
+    },
+    {
+      "id": "philosophy.ethics",
+      "primary_topic": ["Philosophy"],
+      "research_area": "Ethics",
+      "specific_topic": [],
+      "definition": "Substantive normative or philosophical argument about ethics; an incidental moral scenario or harm measurement alone does not establish philosophy."
+    },
+    {
+      "id": "unknown",
+      "primary_topic": [],
+      "research_area": null,
+      "specific_topic": [],
+      "definition": "Insufficient evidence, or no suitable path in this intentionally incomplete experimental vocabulary."
+    }
+  ]
+}

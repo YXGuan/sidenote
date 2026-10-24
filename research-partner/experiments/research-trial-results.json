@@ -1,0 +1,393 @@
+{
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "data": "Public OpenAlex titles/abstracts only; no private notes or vault metadata",
+  "taxonomy_version": 2,
+  "pages": 7,
+  "limitations": "Small hand-selected trial with reviewed expected subjects; title/DOI correspondence verified. Labels revised after an initial pilot revealed incorrect DOI assumptions; not a blinded, held-out or representative evaluation. Topic boundaries overlap. No general accuracy claim, extraction score, cost estimate, or production auto-switch follows.",
+  "scores": {
+    "local": {
+      "topic_micro_f1": 0.842,
+      "topic_exact_match": 0.571,
+      "elapsed_seconds": 0.046
+    },
+    "gpt-6-luna": {
+      "topic_micro_f1": 0.952,
+      "topic_exact_match": 0.857,
+      "elapsed_seconds": 8.645
+    }
+  },
+  "omitted": [
+    {
+      "doi": "10.1038/nature14539",
+      "reason": "No abstract; omitted to keep evaluation grounded"
+    }
+  ],
+  "results": [
+    {
+      "title": "Generative Agents: Interactive Simulacra of Human Behavior",
+      "doi": "10.1145/3586183.3606763",
+      "expected": [
+        "computer science",
+        "social science"
+      ],
+      "local": {
+        "tags": [
+          "language models",
+          "computer science"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "computer science"
+          ],
+          "subtopics": [
+            {
+              "topic": "computer science",
+              "name": "language models"
+            }
+          ]
+        }
+      },
+      "luna": {
+        "tags": [
+          "generative agents",
+          "large language models",
+          "agent simulation",
+          "human behavior",
+          "interactive environments"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "computer science",
+            "social science"
+          ],
+          "subtopics": [
+            {
+              "topic": "computer science",
+              "name": "language models"
+            },
+            {
+              "topic": "social science",
+              "name": "computational social science"
+            }
+          ]
+        },
+        "summary": "Introduces generative agents that use language-model-based memory, reflection, and planning to simulate believable behavior in an interactive environment. An evaluation and ablation study examines their behavior and architecture."
+      }
+    },
+    {
+      "title": "Computational Social Science",
+      "doi": "10.1126/science.1167742",
+      "expected": [
+        "social science"
+      ],
+      "local": {
+        "tags": [
+          "computational social science",
+          "social science"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "social science"
+          ],
+          "subtopics": [
+            {
+              "topic": "social science",
+              "name": "computational social science"
+            }
+          ]
+        }
+      },
+      "luna": {
+        "tags": [
+          "computational social science",
+          "large-scale data",
+          "individual behavior",
+          "group behavior"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "social science"
+          ],
+          "subtopics": [
+            {
+              "topic": "social science",
+              "name": "computational social science"
+            }
+          ]
+        },
+        "summary": "Describes the emergence of computational social science and how large-scale data collection and analysis may reveal patterns in individual and group behavior."
+      }
+    },
+    {
+      "title": "The Strength of Weak Ties",
+      "doi": "10.1086/225469",
+      "expected": [
+        "social science"
+      ],
+      "local": {
+        "tags": [
+          "social networks",
+          "social science"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "social science"
+          ],
+          "subtopics": [
+            {
+              "topic": "social science",
+              "name": "social networks"
+            }
+          ]
+        }
+      },
+      "luna": {
+        "tags": [
+          "social networks",
+          "weak ties",
+          "information diffusion",
+          "sociology",
+          "community organization"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "social science"
+          ],
+          "subtopics": [
+            {
+              "topic": "social science",
+              "name": "social networks"
+            }
+          ]
+        },
+        "summary": "Uses social network analysis to connect small-scale ties with broader sociological patterns. It explores how weak ties relate to information diffusion, opportunity, and community organization."
+      }
+    },
+    {
+      "title": "Self-efficacy: Toward a unifying theory of behavioral change.",
+      "doi": "10.1037/0033-295x.84.2.191",
+      "expected": [
+        "health",
+        "social science"
+      ],
+      "local": {
+        "tags": [
+          "psychology",
+          "clinical medicine",
+          "biology",
+          "social science",
+          "health",
+          "science"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "social science",
+            "health",
+            "science"
+          ],
+          "subtopics": [
+            {
+              "topic": "social science",
+              "name": "psychology"
+            },
+            {
+              "topic": "health",
+              "name": "clinical medicine"
+            },
+            {
+              "topic": "science",
+              "name": "biology"
+            }
+          ]
+        }
+      },
+      "luna": {
+        "tags": [
+          "self-efficacy",
+          "behavioral change",
+          "health screening",
+          "thalassemia",
+          "behavioral intention"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "social science",
+            "research",
+            "health"
+          ],
+          "subtopics": [
+            {
+              "topic": "social science",
+              "name": "psychology"
+            },
+            {
+              "topic": "research",
+              "name": "statistics and causal inference"
+            },
+            {
+              "topic": "health",
+              "name": "clinical medicine"
+            }
+          ]
+        },
+        "summary": "The supplied abstract examines perceived barriers, future consequences, and behavioral intention related to thalassemia screening among young adults. It reports regression results and discusses self-efficacy as a predictor of screening intention."
+      }
+    },
+    {
+      "title": "Guidelines for Human-AI Interaction",
+      "doi": "10.1145/3290605.3300233",
+      "expected": [
+        "computer science"
+      ],
+      "local": {
+        "tags": [
+          "human computer interaction",
+          "computer science"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "computer science"
+          ],
+          "subtopics": [
+            {
+              "topic": "computer science",
+              "name": "human computer interaction"
+            }
+          ]
+        }
+      },
+      "luna": {
+        "tags": [
+          "human-ai interaction",
+          "user interface design",
+          "ai design guidelines",
+          "user study"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "computer science"
+          ],
+          "subtopics": [
+            {
+              "topic": "computer science",
+              "name": "human computer interaction"
+            }
+          ]
+        },
+        "summary": "Proposes 18 guidelines for designing human-AI interactions. The guidelines were evaluated through multiple rounds, including a study with design practitioners."
+      }
+    },
+    {
+      "title": "Climate change in the Fertile Crescent and implications of the recent Syrian drought",
+      "doi": "10.1073/pnas.1421533112",
+      "expected": [
+        "politics",
+        "science"
+      ],
+      "local": {
+        "tags": [
+          "climate",
+          "science"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "science"
+          ],
+          "subtopics": [
+            {
+              "topic": "science",
+              "name": "climate"
+            }
+          ]
+        }
+      },
+      "luna": {
+        "tags": [
+          "climate change",
+          "drought",
+          "syria",
+          "fertile crescent",
+          "greenhouse gases",
+          "political unrest"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "science",
+            "politics"
+          ],
+          "subtopics": [
+            {
+              "topic": "science",
+              "name": "climate"
+            },
+            {
+              "topic": "politics",
+              "name": "public policy"
+            }
+          ]
+        },
+        "summary": "Analyzes climate trends and the recent Syrian drought, linking its severity to long-term drying and warming consistent with increased greenhouse gases. The abstract also describes the drought's contribution to political unrest."
+      }
+    },
+    {
+      "title": "Human tRNA synthetase catalytic nulls with diverse functions",
+      "doi": "10.1126/science.1252943",
+      "expected": [
+        "science"
+      ],
+      "local": {
+        "tags": [
+          "biology",
+          "science"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "science"
+          ],
+          "subtopics": [
+            {
+              "topic": "science",
+              "name": "biology"
+            }
+          ]
+        }
+      },
+      "luna": {
+        "tags": [
+          "trna synthetases",
+          "gene splicing",
+          "catalytic-null variants",
+          "signaling proteins",
+          "molecular biology"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "science"
+          ],
+          "subtopics": [
+            {
+              "topic": "science",
+              "name": "biology"
+            }
+          ]
+        },
+        "summary": "Reports natural catalytic-null variants of human aminoacyl tRNA synthetases, formed through splicing that retains noncatalytic domains while removing catalytic ones. The abstract describes diverse biological and signaling functions for these variants."
+      }
+    }
+  ]
+}

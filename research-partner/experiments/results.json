@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-17",
+  "dataset": "8 invented English examples; overlaps the local rule vocabulary; not a held-out quality test",
+  "local": {
+    "type_exact_match": 1.0,
+    "topic_micro_f1": 1.0,
+    "elapsed_seconds": 0.003
+  },
+  "codex": {
+    "model": "gpt-6-luna",
+    "reasoning_effort": "low",
+    "cli_version": "0.163.0",
+    "type_exact_match": 1.0,
+    "topic_micro_f1": 0.9473684210526315,
+    "elapsed_seconds": 7.712
+  },
+  "sentence_transformers": {
+    "status": "adapter included; package/weights not installed or evaluated"
+  },
+  "private_library_data_sent": false
+}

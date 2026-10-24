@@ -1,0 +1,9 @@
+# Optional Kura runtime, isolated from the bridge's Python dependencies.
+sentence-transformers==5.1.2
+scikit-learn==1.7.2
+rich==14.2.0
+openai==2.6.1
+pydantic==2.12.3
+thefuzz==0.22.1
+tenacity==9.1.2
+tqdm==4.67.1

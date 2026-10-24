@@ -1,0 +1,8 @@
+client/
+browser-extension/
+*.log
+__pycache__/
+.DS_Store
+/design-preview/
+/design-review/
+/*.png

@@ -1,0 +1,4 @@
+nltk==3.10.4
+vaderSentiment==3.3.2
+rank-bm25==0.2.2
+networkx==3.4.2

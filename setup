@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+"""Prepare sidenote from this checkout. See docs/SETUP.md."""
+from tools.setup import main
+
+if __name__ == "__main__":
+    raise SystemExit(main())

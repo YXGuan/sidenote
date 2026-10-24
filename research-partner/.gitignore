@@ -1,0 +1,9 @@
+upstream/
+vault/
+.demo-vault/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+*.log
+.local-tools/

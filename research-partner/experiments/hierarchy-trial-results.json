@@ -1,0 +1,412 @@
+{
+  "data": "Public arXiv titles/abstracts and explicitly synthetic controls; no vault access",
+  "taxonomy": "proposal-1",
+  "expected_labels_set_before_run": true,
+  "limitations": "Diagnostic cases selected to investigate a known failure; not held out, blinded, representative, or an accuracy estimate. This vocabulary is an incomplete experimental subset. Evidence validation checks quotation, not semantic entailment.",
+  "plural_matching": {
+    "LLMs_matches_llm": false,
+    "language_models_matches_language_model": false
+  },
+  "cases": [
+    {
+      "id": "2510.01395",
+      "title": "Sycophantic AI Decreases Prosocial Intentions and Promotes Dependence",
+      "url": "https://arxiv.org/abs/2510.01395",
+      "input_sha256": "b540a71447b0145ce570b2466de0de30b3f78b91851cb2b8003245de6d93bc1b",
+      "expected_primary": "llm.alignment.sycophancy.social",
+      "local_v2": {
+        "tags": [
+          "computer science"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "computer science"
+          ],
+          "subtopics": []
+        }
+      },
+      "luna_v2": {
+        "tags": [
+          "ai sycophancy",
+          "interpersonal conflict",
+          "prosocial behavior",
+          "ai advice",
+          "user trust",
+          "preregistered experiments",
+          "model behavior"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "computer science",
+            "social science",
+            "research"
+          ],
+          "subtopics": [
+            {
+              "topic": "computer science",
+              "name": "ai evaluation and safety"
+            },
+            {
+              "topic": "social science",
+              "name": "psychology"
+            },
+            {
+              "topic": "research",
+              "name": "statistics and causal inference"
+            }
+          ]
+        }
+      },
+      "luna_hierarchy": {
+        "document_id": "2510.01395",
+        "primary": {
+          "path_id": "llm.alignment.sycophancy.social",
+          "evidence_field": "title",
+          "evidence_verified": true,
+          "evidence_quote_sha256": "4a438637261e78ccd880fe14e322caf5a9fc3e36fedc58d186af1029f328334b"
+        },
+        "secondary": [
+          {
+            "path_id": "psychology.social",
+            "evidence_field": "abstract",
+            "evidence_verified": true,
+            "evidence_quote_sha256": "988d6eacf85b37cace66fc808cb74a8a4c48896885cc18fe3f342c37cad3a986"
+          },
+          {
+            "path_id": "hci.human-ai",
+            "evidence_field": "abstract",
+            "evidence_verified": true,
+            "evidence_quote_sha256": "726c2e456c8eeebf17985312ce7f68747cf9c8b07b55c8fddbf55ec132f11ea9"
+          }
+        ]
+      },
+      "primary_matches_expected": true
+    },
+    {
+      "id": "2505.13995",
+      "title": "ELEPHANT: Measuring and understanding social sycophancy in LLMs",
+      "url": "https://arxiv.org/abs/2505.13995",
+      "input_sha256": "e41ee25cb377d1548b3808e1d4e129223ae49955e7da73142653305b4891b5ae",
+      "expected_primary": "llm.alignment.sycophancy.social",
+      "local_v2": {
+        "tags": [
+          "language models",
+          "computer science"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "computer science"
+          ],
+          "subtopics": [
+            {
+              "topic": "computer science",
+              "name": "language models"
+            }
+          ]
+        }
+      },
+      "luna_v2": {
+        "tags": [
+          "social sycophancy",
+          "large language models",
+          "benchmark",
+          "moral conflict",
+          "preference datasets",
+          "model steering"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "computer science",
+            "social science"
+          ],
+          "subtopics": [
+            {
+              "topic": "computer science",
+              "name": "language models"
+            },
+            {
+              "topic": "computer science",
+              "name": "ai evaluation and safety"
+            },
+            {
+              "topic": "social science",
+              "name": "psychology"
+            }
+          ]
+        }
+      },
+      "luna_hierarchy": {
+        "document_id": "2505.13995",
+        "primary": {
+          "path_id": "llm.alignment.sycophancy.social",
+          "evidence_field": "title",
+          "evidence_verified": true,
+          "evidence_quote_sha256": "a5c01be3683973b41c9cf16c6b84a4034ef5f2355e1a802b5fcc6ed20be1fb08"
+        },
+        "secondary": []
+      },
+      "primary_matches_expected": true
+    },
+    {
+      "id": "capabilities",
+      "title": "Evaluation of language models on arithmetic puzzles",
+      "url": "https://example.org/capabilities",
+      "input_sha256": "922c38b9b9003e3e78fc34d1023607a6742cfcd6134a0a45ad2153202d51349d",
+      "expected_primary": "llm.capabilities",
+      "local_v2": {
+        "tags": [],
+        "classification": {
+          "link_type": "unknown",
+          "topics": [],
+          "subtopics": []
+        }
+      },
+      "luna_v2": {
+        "tags": [
+          "language models",
+          "arithmetic puzzles",
+          "benchmark",
+          "exact answer accuracy"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "computer science"
+          ],
+          "subtopics": [
+            {
+              "topic": "computer science",
+              "name": "language models"
+            },
+            {
+              "topic": "computer science",
+              "name": "ai evaluation and safety"
+            }
+          ]
+        }
+      },
+      "luna_hierarchy": {
+        "document_id": "capabilities",
+        "primary": {
+          "path_id": "llm.capabilities",
+          "evidence_field": "abstract",
+          "evidence_verified": true,
+          "evidence_quote_sha256": "c7bd0a5d08639af4098a1f7119250b22228b58ee7dd6f4203d34f83d200623a0"
+        },
+        "secondary": []
+      },
+      "primary_matches_expected": true
+    },
+    {
+      "id": "inference",
+      "title": "Efficient LLMs on consumer hardware",
+      "url": "https://example.org/inference",
+      "input_sha256": "23ce0c991f1ea56b5af8da8c84834fddf161c3a3ed98075bdda0042e7eeb3ddf",
+      "expected_primary": "llm",
+      "local_v2": {
+        "tags": [],
+        "classification": {
+          "link_type": "unknown",
+          "topics": [],
+          "subtopics": []
+        }
+      },
+      "luna_v2": {
+        "tags": [
+          "llm inference",
+          "quantization",
+          "matrix kernels",
+          "throughput",
+          "memory optimization",
+          "consumer hardware"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "computer science",
+            "technology"
+          ],
+          "subtopics": [
+            {
+              "topic": "computer science",
+              "name": "language models"
+            },
+            {
+              "topic": "technology",
+              "name": "software engineering"
+            }
+          ]
+        }
+      },
+      "luna_hierarchy": {
+        "document_id": "inference",
+        "primary": {
+          "path_id": "llm",
+          "evidence_field": "title",
+          "evidence_verified": true,
+          "evidence_quote_sha256": "d03312b59c2e2f83709738ef0995ecba28fb11f49b962129c989fdc9e6fa889d"
+        },
+        "secondary": []
+      },
+      "primary_matches_expected": true
+    },
+    {
+      "id": "human-sycophancy",
+      "title": "Sycophancy and conformity in workplace teams",
+      "url": "https://example.org/human-sycophancy",
+      "input_sha256": "c635b9b435a59855ccd0203c67e6c449ae81c1b3ad8cceb0daeddbcf9f860b1a",
+      "expected_primary": "psychology.social",
+      "local_v2": {
+        "tags": [
+          "psychology",
+          "social science"
+        ],
+        "classification": {
+          "link_type": "unknown",
+          "topics": [
+            "social science"
+          ],
+          "subtopics": [
+            {
+              "topic": "social science",
+              "name": "psychology"
+            }
+          ]
+        }
+      },
+      "luna_v2": {
+        "tags": [
+          "workplace teams",
+          "sycophancy",
+          "conformity",
+          "social psychology",
+          "group status",
+          "interpersonal relationships"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "social science"
+          ],
+          "subtopics": [
+            {
+              "topic": "social science",
+              "name": "psychology"
+            }
+          ]
+        }
+      },
+      "luna_hierarchy": {
+        "document_id": "human-sycophancy",
+        "primary": {
+          "path_id": "psychology.social",
+          "evidence_field": "abstract",
+          "evidence_verified": true,
+          "evidence_quote_sha256": "b5726a3ca27eef75e3c462a42551c4d931e528ac913e4e37a27b3697425d1883"
+        },
+        "secondary": []
+      },
+      "primary_matches_expected": true
+    },
+    {
+      "id": "sentiment",
+      "title": "Sentiment analysis of hotel reviews",
+      "url": "https://example.org/sentiment",
+      "input_sha256": "7dbe69d4c41ab074aafcec2c490e758b043d97f90c47325a963804c63d10983e",
+      "expected_primary": "nlp.sentiment",
+      "local_v2": {
+        "tags": [
+          "natural language processing",
+          "computer science"
+        ],
+        "classification": {
+          "link_type": "unknown",
+          "topics": [
+            "computer science"
+          ],
+          "subtopics": [
+            {
+              "topic": "computer science",
+              "name": "natural language processing"
+            }
+          ]
+        }
+      },
+      "luna_v2": {
+        "tags": [
+          "sentiment analysis",
+          "hotel reviews",
+          "text classification",
+          "bag-of-words",
+          "logistic regression"
+        ],
+        "classification": {
+          "link_type": "paper",
+          "topics": [
+            "computer science"
+          ],
+          "subtopics": [
+            {
+              "topic": "computer science",
+              "name": "natural language processing"
+            }
+          ]
+        }
+      },
+      "luna_hierarchy": {
+        "document_id": "sentiment",
+        "primary": {
+          "path_id": "nlp.sentiment",
+          "evidence_field": "title",
+          "evidence_verified": true,
+          "evidence_quote_sha256": "8d47e19b9a9e835e98939bb411c23dd64f8f59194bd5aa765b0ff4e167d71c5b"
+        },
+        "secondary": []
+      },
+      "primary_matches_expected": true
+    },
+    {
+      "id": "insufficient",
+      "title": "Interesting results",
+      "url": "https://example.org/insufficient",
+      "input_sha256": "1a4ca636ccbc63cbbe459393bcce4227ae59d29b7fe180b3c5e3c0f54b607554",
+      "expected_primary": "unknown",
+      "local_v2": {
+        "tags": [],
+        "classification": {
+          "link_type": "unknown",
+          "topics": [],
+          "subtopics": []
+        }
+      },
+      "luna_v2": {
+        "tags": [],
+        "classification": {
+          "link_type": "unknown",
+          "topics": [],
+          "subtopics": []
+        }
+      },
+      "luna_hierarchy": {
+        "document_id": "insufficient",
+        "primary": {
+          "path_id": "unknown",
+          "evidence_field": "none",
+          "evidence_verified": false,
+          "evidence_quote_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "secondary": []
+      },
+      "primary_matches_expected": true
+    }
+  ],
+  "luna_v2_seconds": 7.361,
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "hierarchy_seconds": 5.111,
+  "diagnostic_primary_matches": 7
+}

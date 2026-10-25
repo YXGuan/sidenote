@@ -45,6 +45,7 @@ try {
   fixtureIndex.links.profile.groups={read:{url:'https://hypothes.is/api/profile/groups',method:'GET',desc:'Profile groups'}};
   const group = {id:'__world__',name:'Public',type:'open',organization:{id:'__default__',name:'Hypothesis',logo:''},scopes:null,links:{html:'https://hypothes.is/groups/__world__'},pre_moderated:false};
   let annotation = config.annotation;
+  const pageNote = {...annotation,id:'native-test-page-note',text:'A synthetic note about this whole page.',target:[]};
   let cloudSaves = 0;
   await context.route('https://hypothes.is/api/**', async route => {
     const url = new URL(route.request().url());
@@ -59,7 +60,7 @@ try {
     else if (url.pathname === '/api/groups') result = [group];
     else if (url.pathname.startsWith('/api/groups/')) result = group;
     else if (url.pathname === '/api/links') result = {'user':'https://hypothes.is/users/:user','search.tag':'https://hypothes.is/search?q=tag::tag','account.settings':'https://hypothes.is/account/settings','groups.new':'https://hypothes.is/groups/new','help':'https://web.hypothes.is/help/'};
-    else if (url.pathname === '/api/search') result = {total:1,rows:[annotation]};
+    else if (url.pathname === '/api/search') result = {total:2,rows:[annotation,pageNote]};
     else if (url.pathname === '/api/badge') result = {total:1};
     else if (url.pathname.startsWith('/api/annotations/')) {
       if (route.request().method() !== 'GET') {
@@ -119,6 +120,7 @@ try {
   await sidebar.getByRole('button',{name:'Post to Public',exact:true}).click();
   await sidebar.getByRole('button',{name:'Edit',exact:true}).waitFor();
   assert.equal(cloudSaves, 1, 'Original cloud save was not called');
+  await page.setViewportSize({width:1280,height:400});
   await sidebar.getByRole('tab',{name:/Page Notes/i}).click();
   await sidebar.getByText('Example University',{exact:false}).waitFor();
   await sidebar.getByRole('textbox',{name:'Personal title',exact:true}).fill('My native Hypothesis title');
@@ -136,6 +138,16 @@ try {
   await sidebar.getByRole('button',{name:'Add group',exact:true}).click();
   await sidebar.getByRole('checkbox',{name:'Lab reading',exact:true}).check();
   assert.equal(cloudSaves, 1, 'Page edits must stay local');
+  const note = sidebar.getByText(pageNote.text,{exact:true});
+  await note.scrollIntoViewIfNeeded();
+  await sidebar.evaluate(async text=>{
+    // Watch multiple frames so a virtualized note cannot disappear/reappear
+    // after the debounced scroll measurement or a page-details resize.
+    for (let frame = 0; frame < 20; frame++) {
+      await new Promise(resolve=>requestAnimationFrame(resolve));
+      if (!document.body.textContent.includes(text)) throw new Error('Page note flickered out below page details');
+    }
+  },pageNote.text);
   await saveScreenshot(page, 'native-document-details-preview.png', {fullPage:true});
   await saveScreenshot(page, 'native-tag-editor-preview.png', {fullPage:true});
   await sidebar.getByRole('tab',{name:/Annotations/i}).click();
@@ -241,7 +253,7 @@ try {
   await page.reload();
   await page.getByText('Updated on the original profile',{exact:true}).waitFor();
   assert.deepEqual(failures, []);
-  console.log(JSON.stringify({extensionId:id,officialExtensionAlsoLoaded:extensions.length === 2,passed:['separate extension identity and paired account login','annotation-specific reaction persisted','annotation controls exclude page metadata','original annotation save authenticated to cloud API','page metadata/title/tags live in Page Notes','manual and auto tags remain separate','page like and custom group saved independently','Compact library, dashboard and settings','annotation sorting persists','connection failures do not show empty counts','Codex confirmation can be cancelled; offline organization completes','original annotation actions remain available offline','local library lists and searches backed-up pages','local library persists across reload','hosted profile personal title persists'],notes:failures}));
+  console.log(JSON.stringify({extensionId:id,officialExtensionAlsoLoaded:extensions.length === 2,passed:['separate extension identity and paired account login','annotation-specific reaction persisted','annotation controls exclude page metadata','original annotation save authenticated to cloud API','page metadata/title/tags live in Page Notes','manual and auto tags remain separate','page like and custom group saved independently','page notes stay visible while scrolling below page details','Compact library, dashboard and settings','annotation sorting persists','connection failures do not show empty counts','Codex confirmation can be cancelled; offline organization completes','original annotation actions remain available offline','local library lists and searches backed-up pages','local library persists across reload','hosted profile personal title persists'],notes:failures}));
 } finally {
   await context.close();
   await fs.rm(profile,{recursive:true,force:true});

@@ -353,6 +353,117 @@ index cf38dbc..5c65919 100644
        {children}
      </ul>
    );
+diff --git a/src/sidebar/components/ThreadList.tsx b/src/sidebar/components/ThreadList.tsx
+index ee1d1d9..200137f 100644
+--- a/src/sidebar/components/ThreadList.tsx
++++ b/src/sidebar/components/ThreadList.tsx
+@@ -1,7 +1,13 @@
+ import { ListenerCollection } from '@hypothesis/frontend-shared';
+ import classnames from 'classnames';
+ import debounce from 'lodash.debounce';
+-import { useEffect, useLayoutEffect, useMemo, useState } from 'preact/hooks';
++import {
++  useEffect,
++  useLayoutEffect,
++  useMemo,
++  useRef,
++  useState,
++} from 'preact/hooks';
+ 
+ import type { Annotation, EPUBContentSelector } from '../../types/api';
+ import type { Thread } from '../helpers/build-thread';
+@@ -30,6 +36,16 @@ function roundScrollPosition(pos: number) {
+   return Math.max(pos - (pos % SCROLL_PRECISION), 0);
+ }
+ 
++/** Position of the list within the scrollable content, below any page details. */
++function listOffset(list: HTMLElement, scrollContainer: Element) {
++  return (
++    list.getBoundingClientRect().top -
++    scrollContainer.getBoundingClientRect().top -
++    scrollContainer.clientTop +
++    scrollContainer.scrollTop
++  );
++}
++
+ export type ThreadListProps = {
+   threads: Thread[];
+ };
+@@ -91,6 +107,8 @@ function headingMap(threads: Thread[]): Map<string, string> {
+  * embedded YouTube videos, rendered math and more.
+  */
+ export default function ThreadList({ threads }: ThreadListProps) {
++  const list = useRef<HTMLDivElement>(null);
++
+   // Client height of the scroll container.
+   const [scrollContainerHeight, setScrollContainerHeight] = useState(0);
+ 
+@@ -104,26 +122,33 @@ export default function ThreadList({ threads }: ThreadListProps) {
+     const listeners = new ListenerCollection();
+     const scrollContainer = getScrollContainer();
+ 
+-    setScrollContainerHeight(scrollContainer.clientHeight);
+-    setScrollPosition(roundScrollPosition(scrollContainer.scrollTop));
++    const measure = () => {
++      setScrollContainerHeight(scrollContainer.clientHeight);
++      setScrollPosition(
++        roundScrollPosition(
++          scrollContainer.scrollTop -
++            listOffset(list.current!, scrollContainer),
++        ),
++      );
++    };
++    measure();
+ 
+-    const updateScrollPosition = debounce(
+-      () => {
+-        setScrollContainerHeight(scrollContainer.clientHeight);
+-        setScrollPosition(roundScrollPosition(scrollContainer.scrollTop));
+-      },
+-      10,
+-      { maxWait: 100 },
+-    );
++    const updateScrollPosition = debounce(measure, 10, { maxWait: 100 });
+ 
+     listeners.add(scrollContainer, 'scroll', updateScrollPosition);
+ 
+-    // We currently assume that the scroll container's size only changes with
+-    // the window as a whole. A more general approach would involve using
+-    // ResizeObserver
+     listeners.add(window, 'resize', updateScrollPosition);
+ 
++    // Page details can expand or finish loading without a scroll/window resize.
++    // Recalculate the list's origin when the surrounding content changes size.
++    const resizeObserver = new ResizeObserver(updateScrollPosition);
++    resizeObserver.observe(scrollContainer);
++    if (list.current!.parentElement) {
++      resizeObserver.observe(list.current!.parentElement);
++    }
++
+     return () => {
++      resizeObserver.disconnect();
+       listeners.removeAll();
+       updateScrollPosition.cancel();
+     };
+@@ -260,7 +285,8 @@ export default function ThreadList({ threads }: ThreadListProps) {
+       .reduce((total, thread) => total + getThreadHeight(thread), 0);
+ 
+     const scrollContainer = getScrollContainer();
+-    scrollContainer.scrollTop = yOffset;
++    scrollContainer.scrollTop =
++      listOffset(list.current!, scrollContainer) + yOffset;
+   }, [scrollToId, topLevelThreads, threadHeights]);
+ 
+   // When the set of visible threads changes, recalculate the real rendered
+@@ -304,7 +330,7 @@ export default function ThreadList({ threads }: ThreadListProps) {
+     // We use role="list"/role="listitem" rather than unstyled ul/li because
+     // some screen readers do not treat them as lists if they don't explicitly
+     // have bullets
+-    <div role="list">
++    <div role="list" ref={list}>
+       <div style={{ height: offscreenUpperHeight }} />
+       {visibleThreads.map((child, index) => (
+         <div
 diff --git a/src/sidebar/components/UserMenu.tsx b/src/sidebar/components/UserMenu.tsx
 index 58f617f..f0bb38d 100644
 --- a/src/sidebar/components/UserMenu.tsx
@@ -433,6 +544,86 @@ index 8769c11..e547a19 100644
    const selectionState = store.selectionState();
    const filters = store.getFilterValues();
    const showTabs = route === 'sidebar';
+diff --git a/src/sidebar/components/test/ThreadList-test.js b/src/sidebar/components/test/ThreadList-test.js
+index c6ab0f0..2d3c6bc 100644
+--- a/src/sidebar/components/test/ThreadList-test.js
++++ b/src/sidebar/components/test/ThreadList-test.js
+@@ -1,6 +1,7 @@
+ import {
+   checkAccessibility,
+   mockImportedComponents,
++  waitFor,
+ } from '@hypothesis/frontend-testing';
+ import { mount } from 'enzyme';
+ import { act } from 'preact/test-utils';
+@@ -19,10 +20,12 @@ describe('ThreadList', () => {
+   let wrappers;
+ 
+   function createComponent(props) {
++    const content = document.createElement('div');
++    fakeScrollContainer.appendChild(content);
+     const wrapper = mount(
+       <ThreadList threads={fakeTopThread.children} {...props} />,
+       {
+-        attachTo: fakeScrollContainer,
++        attachTo: content,
+       },
+     );
+     wrappers.push(wrapper);
+@@ -305,6 +308,53 @@ describe('ThreadList', () => {
+       assert.equal(renderedThreads.length, 7);
+     });
+ 
++    it('keeps the first notes visible below a tall page details panel', async () => {
++      const wrapper = createComponent();
++      const details = document.createElement('div');
++      details.style.height = '2000px';
++      wrapper.getDOMNode().before(details);
++
++      await act(async () => {
++        fakeScrollContainer.scrollTop = 2000;
++        fakeScrollContainer.dispatchEvent(new Event('scroll'));
++      });
++
++      assert.equal(fakeScrollContainer.scrollTop, 2000);
++      assert.equal(
++        wrapper.getDOMNode().querySelector('[role="listitem"]').id,
++        'thread-0',
++      );
++    });
++
++    it('updates visible notes when page details expand without scrolling', async () => {
++      const wrapper = createComponent();
++      const firstNote = () =>
++        wrapper.getDOMNode().querySelector('[role="listitem"]').id;
++
++      await act(async () => {
++        fakeScrollContainer.scrollTop = 2000;
++        fakeScrollContainer.dispatchEvent(new Event('scroll'));
++      });
++      assert.notEqual(firstNote(), 'thread-0');
++
++      const details = document.createElement('div');
++      details.style.height = '2000px';
++      wrapper.getDOMNode().before(details);
++
++      await waitFor(() => firstNote() === 'thread-0');
++    });
++
++    it('scrolls a new page note below the page details panel', () => {
++      const wrapper = createComponent();
++      const details = document.createElement('div');
++      details.style.height = '2000px';
++      wrapper.getDOMNode().before(details);
++
++      addNewAnnotation(wrapper, { $tag: 'thread-0' });
++
++      assert.equal(fakeScrollContainer.scrollTop, 2000);
++    });
++
+     it('updates thread heights as the list is scrolled', () => {
+       const scrollTo = yOffset => {
+         act(() => {
 diff --git a/src/sidebar/services/annotations.ts b/src/sidebar/services/annotations.ts
 index bc08052..9b8709a 100644
 --- a/src/sidebar/services/annotations.ts

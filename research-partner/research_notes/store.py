@@ -219,6 +219,7 @@ without the owner's instruction. .local/ contains credentials and is never part 
         analyses = self.records("analysis")
         annotation_states = self.records("annotation_state")
         activity = self.records("activity")
+        references = self.records("references")
         for key, item in metadata.items():
             if item.get("url"):
                 docs.setdefault(key, {"id": key, "url": item["url"], "annotations": []})
@@ -244,7 +245,11 @@ without the owner's instruction. .local/ contains credentials and is never part 
             titles = [a.get("document", {}).get("title", [""]) for a in doc["annotations"]]
             fallback = next((t[0] if isinstance(t, list) else t for t in titles if t and t[0]), doc["url"])
             doc["title"] = doc["overrides"].get("title") or doc["metadata"].get("title") or fallback
-            doc["tags"] = sorted(set(doc["overrides"].get("tags", []) + [t for a in doc["annotations"] for t in a.get("tags", [])]))
+            from .zotero import reference_details
+            imported = reference_details(references.get(key, {}))
+            doc["reference_notes"] = imported["notes"]
+            doc["reference_tags"] = imported["tags"]
+            doc["tags"] = sorted(set(doc["overrides"].get("tags", []) + imported["tags"] + [t for a in doc["annotations"] for t in a.get("tags", [])]))
             doc["reaction"] = doc["overrides"].get("reaction")
             doc["reaction"] = {"love": "like", "hate": "bad", "dislike": "bad"}.get(doc["reaction"], doc["reaction"])
             doc["page_tags"] = doc["overrides"].get("tags", [])
@@ -451,6 +456,10 @@ without the owner's instruction. .local/ contains credentials and is never part 
                 for item in analysis.get("sentiments", []):
                     lines.extend([f"- {item['annotation_id']}: {item['sentiment']} ({item['confidence']:.0%}) — {md_text(item['reason'])}"])
                 lines.append("")
+            if doc.get("reference_notes"):
+                lines.extend(["## Imported reference notes", ""])
+                for note in doc["reference_notes"]:
+                    lines.extend([md_text(note), ""])
             lines.extend(["## Annotations", ""])
             for annotation in doc["annotations"]:
                 aid = annotation["id"]
@@ -475,7 +484,7 @@ without the owner's instruction. .local/ contains credentials and is never part 
         atomic_write(self.root / "INDEX.md", "\n".join(index) + "\n")
 
     def snapshot(self, sync=None):
-        payload = {"schema_version": 1, "created": now(), "user": self.config().get("user"), "sync": sync, "collections": {name: self.records(name) for name in ("raw", "metadata", "overrides", "analysis", "annotation_state", "collections", "activity", "knowledge", "openalex")}, "personal_notes": {key: self.personal_notes(key) for key in self.documents(include_removed=True)}}
+        payload = {"schema_version": 1, "created": now(), "user": self.config().get("user"), "sync": sync, "collections": {name: self.records(name) for name in ("raw", "metadata", "overrides", "analysis", "annotation_state", "collections", "activity", "knowledge", "openalex", "references", "imports")}, "personal_notes": {key: self.personal_notes(key) for key in self.documents(include_removed=True)}}
         body = encoded(payload)
         digest = hashlib.sha256(body).hexdigest()
         name = payload["created"].replace(":", "").replace("-", "") + "-" + digest[:12] + ".json"
@@ -498,7 +507,7 @@ def restore_snapshot(source, destination):
     if destination.exists() and any(destination.iterdir()):
         raise ValueError("Restore destination must be empty")
     for collection, records in payload["collections"].items():
-        if collection not in ("raw", "metadata", "overrides", "analysis", "annotation_state", "collections", "activity", "knowledge", "openalex") or not isinstance(records, dict):
+        if collection not in ("raw", "metadata", "overrides", "analysis", "annotation_state", "collections", "activity", "knowledge", "openalex", "references", "imports") or not isinstance(records, dict):
             raise ValueError("Invalid snapshot collection")
         for key in records:
             safe_id(key)

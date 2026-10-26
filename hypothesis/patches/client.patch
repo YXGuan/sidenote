@@ -4047,10 +4047,10 @@ index 45e8b8f..1d13330 100644
      enzyme-adapter-preact-pure: ^4.0.1
 diff --git a/dev-server/library-preview.tsx b/dev-server/library-preview.tsx
 new file mode 100644
-index 0000000..27a7588
+index 0000000..491a45f
 --- /dev/null
 +++ b/dev-server/library-preview.tsx
-@@ -0,0 +1,596 @@
+@@ -0,0 +1,601 @@
 +/** Synthetic preview. No user vault, credentials or extension access. */
 +import { render } from 'preact';
 +
@@ -4525,6 +4525,11 @@ index 0000000..27a7588
 +          backup: previewBackup,
 +          enrichment: previewEnrichment,
 +          settings: { provider: 'local', model: 'gpt-6-luna', automatic: true },
++        };
++      } else if (m.action === 'zotero-connection') {
++        data = {
++          connection: { library_type: 'users', library_id: '' },
++          api_key: { configured: false, editable: true },
 +        };
 +      } else if (m.action === 'settings' || m.action === 'save-settings') {
 +        if (m.action === 'save-settings') {
@@ -6685,15 +6690,16 @@ index 0000000..6c5a620
 +}
 diff --git a/src/sidebar/components/LibrarySettings.tsx b/src/sidebar/components/LibrarySettings.tsx
 new file mode 100644
-index 0000000..d6aec12
+index 0000000..0308164
 --- /dev/null
 +++ b/src/sidebar/components/LibrarySettings.tsx
-@@ -0,0 +1,315 @@
+@@ -0,0 +1,319 @@
 +import type { ComponentChildren } from 'preact';
 +import { useEffect, useState } from 'preact/hooks';
 +
 +import type { LibraryColorScheme } from '../helpers/library-preferences';
 +import { researchRequest } from '../helpers/local-research';
++import ZoteroSettings from './ZoteroSettings';
 +
 +type Preferences = {
 +  backup_enabled: boolean;
@@ -6736,6 +6742,7 @@ index 0000000..d6aec12
 +  onBackup,
 +  onEnrich,
 +  organization,
++  onImported,
 +}: {
 +  developerMode: boolean;
 +  onDeveloperModeChange: (value: boolean) => void;
@@ -6746,6 +6753,7 @@ index 0000000..d6aec12
 +  onBackup: () => void;
 +  onEnrich: () => void;
 +  organization: ComponentChildren;
++  onImported: () => void;
 +}) {
 +  const [saved, setSaved] = useState<Settings | null>(null);
 +  const [preferences, setPreferences] = useState<Preferences | null>(null);
@@ -7000,6 +7008,7 @@ index 0000000..d6aec12
 +          </fieldset>
 +        </form>
 +      )}
++      <ZoteroSettings onImported={onImported} />
 +      {organization}
 +    </div>
 +  );
@@ -7228,10 +7237,10 @@ index 0000000..53db738
 +}
 diff --git a/src/sidebar/components/LocalLibraryView.tsx b/src/sidebar/components/LocalLibraryView.tsx
 new file mode 100644
-index 0000000..296002d
+index 0000000..4d1cb2a
 --- /dev/null
 +++ b/src/sidebar/components/LocalLibraryView.tsx
-@@ -0,0 +1,1225 @@
+@@ -0,0 +1,1254 @@
 +import { confirm, Card, CardContent } from '@hypothesis/frontend-shared';
 +import {
 +  useCallback,
@@ -7271,6 +7280,7 @@ index 0000000..296002d
 +import {
 +  cachedResearchDocument,
 +  rememberResearchDocument,
++  refreshResearchDocuments,
 +  researchRequest,
 +  subscribeResearch,
 +} from '../helpers/local-research';
@@ -7295,9 +7305,33 @@ index 0000000..296002d
 +
 +function SavedPage({ uri }: { uri: string }) {
 +  const doc = useResearchDocument(uri);
++  const notes = doc?.reference_notes ?? [];
++  const visibleNotes = useProgressiveList(notes, JSON.stringify([uri, notes]));
++  const tags = doc?.reference_tags ?? [];
++  const visibleTags = useProgressiveList(tags, JSON.stringify([uri, tags]));
 +  return (
 +    <div className="space-y-3">
 +      <PageResearch uri={uri} />
++      {tags.length > 0 && (
++        <section aria-label="Imported reference tags">
++          <h3>Imported tags</h3>
++          <p>{visibleTags.items.join(', ')}</p>
++          <LibraryShowMore {...visibleTags} label="imported tags" />
++        </section>
++      )}
++      {notes.length > 0 && (
++        <section aria-label="Imported reference notes">
++          <h3>Imported reference notes</h3>
++          {visibleNotes.items.map((note, index) => (
++            <Card key={index}>
++              <CardContent>
++                <p className="whitespace-pre-wrap">{note}</p>
++              </CardContent>
++            </Card>
++          ))}
++          <LibraryShowMore {...visibleNotes} label="imported notes" />
++        </section>
++      )}
 +      {doc?.annotations.map(annotation => (
 +        <Card key={annotation.id}>
 +          <CardContent classes="space-y-2">
@@ -7994,6 +8028,10 @@ index 0000000..296002d
 +              enrichment={enrichment}
 +              onBackup={backUp}
 +              onEnrich={enrich}
++              onImported={() => {
++                void refreshResearchDocuments();
++                void refresh(true);
++              }}
 +              organization={
 +                <section
 +                  className="ld-panel ld-settings"
@@ -11289,6 +11327,393 @@ index 0000000..1fce638
 +    </svg>
 +  );
 +}
+diff --git a/src/sidebar/components/ZoteroOnlineSettings.tsx b/src/sidebar/components/ZoteroOnlineSettings.tsx
+new file mode 100644
+index 0000000..2f70ed6
+--- /dev/null
++++ b/src/sidebar/components/ZoteroOnlineSettings.tsx
+@@ -0,0 +1,220 @@
++import { useEffect, useState } from 'preact/hooks';
++
++import { researchRequest } from '../helpers/local-research';
++import { importZoteroLibrary } from '../helpers/zotero';
++
++type Connection = { library_type: string; library_id: string };
++type Settings = {
++  connection: Connection;
++  api_key: { configured: boolean; editable: boolean };
++};
++
++export default function ZoteroOnlineSettings({
++  onImported,
++}: {
++  onImported: (result: {
++    references: number;
++    created: number;
++    updated: number;
++    unchanged: number;
++  }) => void;
++}) {
++  const [saved, setSaved] = useState<Settings | null>(null);
++  const [connection, setConnection] = useState<Connection>({
++    library_type: 'users',
++    library_id: '',
++  });
++  const [apiKey, setApiKey] = useState<string | null>('');
++  const [busy, setBusy] = useState(false);
++  const [error, setError] = useState('');
++  const [message, setMessage] = useState('');
++  const unsaved =
++    saved &&
++    (JSON.stringify(connection) !== JSON.stringify(saved.connection) ||
++      apiKey !== '');
++  const load = async () => {
++    try {
++      const result = (await researchRequest('zotero-connection')) as Settings;
++      if (!result.connection || !result.api_key) {
++        throw new Error(
++          'Restart the local backend to enable Zotero online settings.',
++        );
++      }
++      setSaved(result);
++      setConnection(result.connection);
++      setError('');
++    } catch (error) {
++      setError(error.message);
++    }
++  };
++  useEffect(() => {
++    void load();
++  }, []);
++  const save = async (event: Event) => {
++    event.preventDefault();
++    setBusy(true);
++    setError('');
++    setMessage('');
++    try {
++      const result = (await researchRequest('save-zotero-connection', {
++        values: {
++          ...connection,
++          ...(apiKey !== '' ? { api_key: apiKey } : {}),
++        },
++      })) as Settings;
++      setSaved(result);
++      setConnection(result.connection);
++      setApiKey('');
++      setMessage(
++        'Connection settings saved. Choose Import from Zotero online to read your library.',
++      );
++    } catch (error) {
++      setError(error.message);
++    } finally {
++      setBusy(false);
++    }
++  };
++  const importOnline = async () => {
++    setBusy(true);
++    setError('');
++    setMessage('');
++    try {
++      const result = await importZoteroLibrary(
++        researchRequest,
++        'import-zotero-online',
++      );
++      onImported(result as Parameters<typeof onImported>[0]);
++      setMessage(
++        `${result.references} online references processed. Import again to refresh.`,
++      );
++    } catch (error) {
++      setError(error.message);
++    } finally {
++      setBusy(false);
++    }
++  };
++  return (
++    <section aria-label="Zotero online connection">
++      <h3>Connect your online library</h3>
++      <p className="ld-hint">
++        Read your synced personal or group library while Zotero desktop is
++        closed. Create a dedicated key with library and note read access in{' '}
++        <a
++          href="https://www.zotero.org/settings/keys"
++          target="_blank"
++          rel="noreferrer"
++        >
++          Zotero API key settings
++        </a>
++        , where you can also find your numeric user ID. Enter the key here; it
++        is stored locally and used only with Zotero’s official API.
++      </p>
++      {saved && (
++        <>
++          <form onSubmit={save}>
++            <fieldset disabled={busy}>
++              <label className="ld-choice">
++                <span>Zotero library</span>
++                <select
++                  aria-label="Zotero library type"
++                  value={connection.library_type}
++                  onChange={event =>
++                    setConnection({
++                      ...connection,
++                      library_type: event.currentTarget.value,
++                    })
++                  }
++                >
++                  <option value="users">Personal library</option>
++                  <option value="groups">Group library</option>
++                </select>
++              </label>
++              <label className="ld-choice">
++                <span>Numeric user or group ID</span>
++                <input
++                  aria-label="Zotero library ID"
++                  inputMode="numeric"
++                  pattern="[1-9][0-9]*"
++                  required
++                  value={connection.library_id}
++                  onInput={event =>
++                    setConnection({
++                      ...connection,
++                      library_id: event.currentTarget.value.trim(),
++                    })
++                  }
++                />
++              </label>
++              <label className="ld-choice">
++                <span>Zotero API key</span>
++                <input
++                  type="password"
++                  aria-label="Zotero API key"
++                  autoComplete="off"
++                  spellcheck={false}
++                  disabled={!saved.api_key.editable}
++                  value={apiKey ?? ''}
++                  placeholder={
++                    saved.api_key.configured
++                      ? 'Configured · blank keeps saved key'
++                      : 'Enter API key'
++                  }
++                  onInput={event => setApiKey(event.currentTarget.value)}
++                />
++              </label>
++              <p className="ld-hint">
++                {!saved.api_key.editable
++                  ? 'Key managed by service environment.'
++                  : apiKey === null
++                    ? 'Key will be removed when saved.'
++                    : saved.api_key.configured
++                      ? 'API key configured.'
++                      : 'No API key saved.'}
++              </p>
++              {saved.api_key.configured && saved.api_key.editable && (
++                <button
++                  className="ld-button"
++                  type="button"
++                  onClick={() => setApiKey(apiKey === null ? '' : null)}
++                >
++                  {apiKey === null ? 'Keep Zotero key' : 'Remove Zotero key'}
++                </button>
++              )}
++              <button className="ld-button" type="submit">
++                Save Zotero connection
++              </button>
++            </fieldset>
++          </form>
++          <button
++            className="ld-button"
++            disabled={
++              busy ||
++              !!unsaved ||
++              !saved.api_key.configured ||
++              !saved.connection.library_id
++            }
++            onClick={importOnline}
++          >
++            Import from Zotero online
++          </button>
++        </>
++      )}
++      {busy && <p role="status">Connecting to Zotero…</p>}
++      {message && (
++        <p className="ld-success" role="status">
++          {message}
++        </p>
++      )}
++      {error && (
++        <p role="alert">
++          {error}
++          {!saved && (
++            <button className="ld-button" onClick={load}>
++              Retry Zotero settings
++            </button>
++          )}
++        </p>
++      )}
++    </section>
++  );
++}
+diff --git a/src/sidebar/components/ZoteroSettings.tsx b/src/sidebar/components/ZoteroSettings.tsx
+new file mode 100644
+index 0000000..d4dabf5
+--- /dev/null
++++ b/src/sidebar/components/ZoteroSettings.tsx
+@@ -0,0 +1,155 @@
++import { useState } from 'preact/hooks';
++
++import { researchRequest } from '../helpers/local-research';
++import { importZoteroLibrary } from '../helpers/zotero';
++import ZoteroOnlineSettings from './ZoteroOnlineSettings';
++
++type ImportResult = {
++  created: number;
++  updated: number;
++  unchanged: number;
++  references: number;
++};
++
++export default function ZoteroSettings({
++  onImported,
++}: {
++  onImported: () => void;
++}) {
++  const [file, setFile] = useState<File | null>(null);
++  const [format, setFormat] = useState('ris');
++  const [includeNotes, setIncludeNotes] = useState(false);
++  const [busy, setBusy] = useState(false);
++  const [error, setError] = useState('');
++  const [message, setMessage] = useState('');
++  const run = async (operation: () => Promise<void>) => {
++    setBusy(true);
++    setError('');
++    setMessage('');
++    try {
++      await operation();
++    } catch (error) {
++      setError(error.message);
++    } finally {
++      setBusy(false);
++    }
++  };
++  const imported = (result: ImportResult) => {
++    setMessage(
++      `${result.references} references processed · ${result.created} added · ${result.updated} updated · ${result.unchanged} unchanged.`,
++    );
++    onImported();
++  };
++  const importFile = () =>
++    run(async () => {
++      if (!file) {
++        return;
++      }
++      if (file.size > 10_000_000) {
++        throw new Error('Choose a reference file smaller than 10 MB.');
++      }
++      const result = await researchRequest('import-references', {
++        values: {
++          content: await file.text(),
++          format: file.name.toLowerCase().endsWith('.ris') ? 'ris' : 'csl-json',
++        },
++      });
++      imported(result as ImportResult);
++    });
++  const importDesktop = () =>
++    run(async () => {
++      const result = await importZoteroLibrary(
++        researchRequest,
++        'import-zotero-desktop',
++      );
++      imported(result as ImportResult);
++    });
++  const exportFile = () =>
++    run(async () => {
++      const result = await researchRequest('export-references', {
++        values: { format, include_notes: format === 'ris' && includeNotes },
++      });
++      const url = URL.createObjectURL(
++        new Blob([result.content], { type: result.content_type }),
++      );
++      const link = document.createElement('a');
++      link.href = url;
++      link.download = result.filename;
++      link.click();
++      setTimeout(() => URL.revokeObjectURL(url), 1000);
++      setMessage(
++        `Exported ${result.references} references. In Zotero, choose File → Import and select the downloaded file.`,
++      );
++    });
++  return (
++    <section className="ld-panel" aria-label="Zotero integration">
++      <h2>Zotero</h2>
++      <p>
++        Exchange references with Zotero. Repeat imports keep your local titles,
++        corrections, reactions and personal notes.
++      </p>
++      <ZoteroOnlineSettings onImported={imported} />
++      <fieldset disabled={busy}>
++        <h3>Import from Zotero</h3>
++        <p className="ld-hint">
++          In Zotero, export your library or selected items as RIS with Export
++          notes enabled, or as CSL JSON for references only. Files stay local.
++        </p>
++        <label className="ld-choice">
++          <span>Reference file</span>
++          <input
++            type="file"
++            accept=".ris,.json"
++            aria-label="Zotero reference file"
++            onChange={event => setFile(event.currentTarget.files?.[0] ?? null)}
++          />
++        </label>
++        <button className="ld-button" disabled={!file} onClick={importFile}>
++          Import reference file
++        </button>
++        <p className="ld-hint">
++          Or open Zotero, enable Settings → Advanced → Allow other applications
++          on this computer to communicate with Zotero, then import your personal
++          desktop library. This reads references, tags and child notes,
++          including PDF annotation text. Attachment files and collection folders
++          are not copied.
++        </p>
++        <button className="ld-button" onClick={importDesktop}>
++          Import from Zotero desktop
++        </button>
++        <h3>Export to Zotero</h3>
++        <label className="ld-choice">
++          <span>Export format</span>
++          <select
++            aria-label="Reference export format"
++            value={format}
++            onChange={event => setFormat(event.currentTarget.value)}
++          >
++            <option value="ris">RIS · references and optional notes</option>
++            <option value="csl-json">CSL JSON · references only</option>
++          </select>
++        </label>
++        {format === 'ris' && (
++          <label className="ld-setting-switch">
++            <input
++              type="checkbox"
++              checked={includeNotes}
++              onChange={event => setIncludeNotes(event.currentTarget.checked)}
++            />
++            Include highlights, comments and personal notes
++          </label>
++        )}
++        <button className="ld-button" onClick={exportFile}>
++          Export library for Zotero
++        </button>
++      </fieldset>
++      {busy && <p role="status">Processing references…</p>}
++      {message && (
++        <p className="ld-success" role="status">
++          {message}
++        </p>
++      )}
++      {error && <p role="alert">{error}</p>}
++    </section>
++  );
++}
 diff --git a/src/sidebar/components/hooks/local-research.ts b/src/sidebar/components/hooks/local-research.ts
 new file mode 100644
 index 0000000..437fd55
@@ -13294,6 +13719,261 @@ index 0000000..53af826
 +    assert.strictEqual(wrapper.find('ResearchGraph').prop('graph'), graph);
 +  });
 +});
+diff --git a/src/sidebar/components/test/ZoteroOnlineSettings-test.js b/src/sidebar/components/test/ZoteroOnlineSettings-test.js
+new file mode 100644
+index 0000000..a87ba06
+--- /dev/null
++++ b/src/sidebar/components/test/ZoteroOnlineSettings-test.js
+@@ -0,0 +1,105 @@
++import { mount } from '@hypothesis/frontend-testing';
++import { act } from 'preact/test-utils';
++
++import ZoteroOnlineSettings, { $imports } from '../ZoteroOnlineSettings';
++
++describe('ZoteroOnlineSettings', () => {
++  let request;
++  let settings;
++  let onImported;
++  beforeEach(() => {
++    settings = {
++      connection: { library_type: 'users', library_id: '12345' },
++      api_key: { configured: true, editable: true },
++    };
++    request = sinon.stub().resolves(settings);
++    onImported = sinon.stub();
++    $imports.$mock({
++      '../helpers/local-research': { researchRequest: request },
++    });
++  });
++  afterEach(() => $imports.$restore());
++  const create = async () => {
++    let wrapper;
++    await act(async () => {
++      wrapper = mount(<ZoteroOnlineSettings onImported={onImported} />);
++    });
++    wrapper.update();
++    return wrapper;
++  };
++  const save = async wrapper => {
++    await act(async () =>
++      wrapper
++        .find('form')
++        .props()
++        .onSubmit({ preventDefault() {} }),
++    );
++    wrapper.update();
++  };
++  it('loads configuration without reading the remote library and never displays saved keys', async () => {
++    const wrapper = await create();
++    assert.calledOnceWithExactly(request, 'zotero-connection');
++    assert.equal(wrapper.find('input[type="password"]').prop('value'), '');
++    await save(wrapper);
++    assert.calledWithExactly(request, 'save-zotero-connection', {
++      values: settings.connection,
++    });
++  });
++  it('saves replacement keys only through the paired bridge and clears the input', async () => {
++    const wrapper = await create();
++    act(() =>
++      wrapper
++        .find('input[type="password"]')
++        .props()
++        .onInput({ currentTarget: { value: 'synthetic-key' } }),
++    );
++    wrapper.update();
++    await save(wrapper);
++    assert.calledWithExactly(request, 'save-zotero-connection', {
++      values: { ...settings.connection, api_key: 'synthetic-key' },
++    });
++    assert.equal(wrapper.find('input[type="password"]').prop('value'), '');
++  });
++  it('imports online only after a click and refreshes local results', async () => {
++    const wrapper = await create();
++    const result = { references: 4, created: 2, updated: 1, unchanged: 1 };
++    request.withArgs('import-zotero-online').resolves(result);
++    await act(async () =>
++      wrapper
++        .find('button')
++        .filterWhere(b => b.text() === 'Import from Zotero online')
++        .props()
++        .onClick(),
++    );
++    assert.calledWithExactly(request, 'import-zotero-online');
++    assert.calledWithExactly(onImported, result);
++  });
++  it('supports removing a key and reports denied access without claiming success', async () => {
++    const wrapper = await create();
++    act(() =>
++      wrapper
++        .find('button')
++        .filterWhere(b => b.text() === 'Remove Zotero key')
++        .props()
++        .onClick(),
++    );
++    wrapper.update();
++    await save(wrapper);
++    assert.calledWithExactly(request, 'save-zotero-connection', {
++      values: { ...settings.connection, api_key: null },
++    });
++    request
++      .withArgs('import-zotero-online')
++      .rejects(new Error('Zotero denied access'));
++    await act(async () =>
++      wrapper
++        .find('button')
++        .filterWhere(b => b.text() === 'Import from Zotero online')
++        .props()
++        .onClick(),
++    );
++    wrapper.update();
++    assert.include(wrapper.find('[role="alert"]').text(), 'denied access');
++    assert.notCalled(onImported);
++  });
++});
+diff --git a/src/sidebar/components/test/ZoteroSettings-test.js b/src/sidebar/components/test/ZoteroSettings-test.js
+new file mode 100644
+index 0000000..31ba230
+--- /dev/null
++++ b/src/sidebar/components/test/ZoteroSettings-test.js
+@@ -0,0 +1,138 @@
++import { mount } from '@hypothesis/frontend-testing';
++import { act } from 'preact/test-utils';
++
++import ZoteroSettings, { $imports } from '../ZoteroSettings';
++
++describe('ZoteroSettings', () => {
++  let request;
++  let onImported;
++  beforeEach(() => {
++    onImported = sinon.stub();
++    request = sinon.stub().resolves({
++      references: 3,
++      created: 1,
++      updated: 1,
++      unchanged: 1,
++    });
++    $imports.$mock({
++      '../helpers/local-research': { researchRequest: request },
++      './ZoteroOnlineSettings': { default: () => null },
++    });
++  });
++  afterEach(() => $imports.$restore());
++  const create = () => mount(<ZoteroSettings onImported={onImported} />);
++  const click = async (wrapper, label) => {
++    await act(async () =>
++      wrapper
++        .find('button')
++        .filterWhere(b => b.text() === label)
++        .props()
++        .onClick(),
++    );
++    wrapper.update();
++  };
++
++  it('reads the desktop only on a click and refreshes the library after success', async () => {
++    const wrapper = create();
++    assert.notCalled(request);
++    await click(wrapper, 'Import from Zotero desktop');
++    assert.calledOnceWithExactly(request, 'import-zotero-desktop');
++    assert.calledOnce(onImported);
++    assert.include(wrapper.text(), '3 references processed');
++    assert.include(wrapper.text(), '1 added');
++  });
++
++  it('shows desktop failures and permits retry without claiming an import', async () => {
++    request.rejects(new Error('Open Zotero and enable its local API'));
++    const wrapper = create();
++    await click(wrapper, 'Import from Zotero desktop');
++    assert.include(wrapper.find('[role="alert"]').text(), 'Open Zotero');
++    assert.notCalled(onImported);
++    assert.isFalse(wrapper.find('fieldset').prop('disabled'));
++  });
++
++  it('reads the chosen file and sends its format to the local bridge', async () => {
++    const wrapper = create();
++    act(() =>
++      wrapper
++        .find('input[type="file"]')
++        .props()
++        .onChange({
++          currentTarget: {
++            files: [
++              {
++                name: 'library.RIS',
++                size: 20,
++                text: async () => 'TY  - JOUR\nER  -',
++              },
++            ],
++          },
++        }),
++    );
++    wrapper.update();
++    await click(wrapper, 'Import reference file');
++    assert.calledWithExactly(request, 'import-references', {
++      values: { content: 'TY  - JOUR\nER  -', format: 'ris' },
++    });
++    assert.calledOnce(onImported);
++  });
++
++  it('rejects oversized files before reading or sending them', async () => {
++    const wrapper = create();
++    const text = sinon.stub();
++    act(() =>
++      wrapper
++        .find('input[type="file"]')
++        .props()
++        .onChange({
++          currentTarget: {
++            files: [{ name: 'library.ris', size: 10_000_001, text }],
++          },
++        }),
++    );
++    wrapper.update();
++    await click(wrapper, 'Import reference file');
++    assert.notCalled(text);
++    assert.notCalled(request);
++    assert.include(wrapper.find('[role="alert"]').text(), '10 MB');
++  });
++
++  it('exports references by default and includes private notes only when selected', async () => {
++    request.resolves({
++      content: 'TY  - JOUR\nER  -',
++      content_type: 'text/plain',
++      filename: 'sidenote.ris',
++      references: 1,
++    });
++    const download = sinon.stub(HTMLAnchorElement.prototype, 'click');
++    const wrapper = create();
++    await click(wrapper, 'Export library for Zotero');
++    assert.calledWithExactly(request, 'export-references', {
++      values: { format: 'ris', include_notes: false },
++    });
++    assert.calledOnce(download);
++    assert.notCalled(onImported);
++    act(() =>
++      wrapper
++        .find('input[type="checkbox"]')
++        .props()
++        .onChange({ currentTarget: { checked: true } }),
++    );
++    wrapper.update();
++    await click(wrapper, 'Export library for Zotero');
++    assert.calledWithExactly(request, 'export-references', {
++      values: { format: 'ris', include_notes: true },
++    });
++    act(() =>
++      wrapper
++        .find('select')
++        .props()
++        .onChange({ currentTarget: { value: 'csl-json' } }),
++    );
++    wrapper.update();
++    await click(wrapper, 'Export library for Zotero');
++    assert.calledWithExactly(request, 'export-references', {
++      values: { format: 'csl-json', include_notes: false },
++    });
++  });
++});
 diff --git a/src/sidebar/helpers/library-activity.ts b/src/sidebar/helpers/library-activity.ts
 new file mode 100644
 index 0000000..715159f
@@ -13687,10 +14367,10 @@ index 0000000..1a49833
 +}
 diff --git a/src/sidebar/helpers/library.ts b/src/sidebar/helpers/library.ts
 new file mode 100644
-index 0000000..89adb80
+index 0000000..709ec39
 --- /dev/null
 +++ b/src/sidebar/helpers/library.ts
-@@ -0,0 +1,434 @@
+@@ -0,0 +1,441 @@
 +import type {
 +  PageClassification,
 +  PageReaction,
@@ -13702,6 +14382,7 @@ index 0000000..89adb80
 +  url: string;
 +  title: string;
 +  manual_tags: string[];
++  reference_tags?: string[];
 +  auto_tags: string[];
 +  groups: string[];
 +  classification: PageClassification;
@@ -13858,6 +14539,7 @@ index 0000000..89adb80
 +    ...previous,
 +    title: doc.title,
 +    manual_tags: doc.manual_tags ?? doc.page_tags,
++    reference_tags: doc.reference_tags,
 +    auto_tags: doc.auto_tags ?? [],
 +    groups: doc.groups ?? [],
 +    classification: doc.classification ?? previous.classification,
@@ -13894,6 +14576,7 @@ index 0000000..89adb80
 +    page.summary ?? '',
 +    page.metadata.abstract ?? '',
 +    ...page.manual_tags,
++    ...(page.reference_tags ?? []),
 +    ...page.auto_tags,
 +    ...page.groups,
 +    ...(page.metadata.authors ?? []),
@@ -13924,7 +14607,11 @@ index 0000000..89adb80
 +      subtopicLabel(item),
 +    ]),
 +    group: page.groups,
-+    tag: [...page.manual_tags, ...page.auto_tags],
++    tag: [
++      ...page.manual_tags,
++      ...page.auto_tags,
++      ...(page.reference_tags ?? []),
++    ],
 +    reaction: [page.reaction ?? 'unrated'],
 +  };
 +  const full = normalized(searchable(page));
@@ -14127,10 +14814,10 @@ index 0000000..89adb80
 +}
 diff --git a/src/sidebar/helpers/local-research.ts b/src/sidebar/helpers/local-research.ts
 new file mode 100644
-index 0000000..1ac3699
+index 0000000..db463df
 --- /dev/null
 +++ b/src/sidebar/helpers/local-research.ts
-@@ -0,0 +1,199 @@
+@@ -0,0 +1,209 @@
 +/** Local additions to the original client. The bridge key stays in the worker. */
 +import type { Annotation } from '../../types/api';
 +
@@ -14171,6 +14858,8 @@ index 0000000..1ac3699
 +    visits_by_day?: Record<string, number>;
 +  };
 +  annotations: Annotation[];
++  reference_notes?: string[];
++  reference_tags?: string[];
 +  annotation_states: Record<
 +    string,
 +    {
@@ -14303,6 +14992,14 @@ index 0000000..1ac3699
 +    pending.set(uri, request);
 +  }
 +  return pending.get(uri)!;
++}
++
++/** Refresh open/cached details after a library-level import. */
++export async function refreshResearchDocuments() {
++  await Promise.allSettled(pending.values());
++  const uris = [...documents.keys()];
++  documents.clear();
++  await Promise.allSettled(uris.map(uri => loadResearchDocument(uri)));
 +}
 +
 +export async function mirrorResearchAnnotation(
@@ -15399,6 +16096,98 @@ index 0000000..bedbf12
 +    );
 +  });
 +});
+diff --git a/src/sidebar/helpers/test/zotero-test.js b/src/sidebar/helpers/test/zotero-test.js
+new file mode 100644
+index 0000000..cf91ce1
+--- /dev/null
++++ b/src/sidebar/helpers/test/zotero-test.js
+@@ -0,0 +1,51 @@
++import { importZoteroLibrary } from '../zotero';
++
++describe('Zotero import jobs', () => {
++  it('polls a background import without repeating the import request', async () => {
++    const request = sinon.stub();
++    request.onCall(0).resolves({ job: { id: 'test-job', state: 'queued' } });
++    request.onCall(1).resolves({ job: { id: 'test-job', state: 'running' } });
++    request
++      .onCall(2)
++      .resolves({
++        job: {
++          id: 'test-job',
++          state: 'completed',
++          result: { references: 250 },
++        },
++      });
++    const wait = sinon.stub().resolves();
++    const result = await importZoteroLibrary(
++      request,
++      'import-zotero-online',
++      wait,
++    );
++    assert.deepEqual(result, { references: 250 });
++    assert.calledOnce(request.withArgs('import-zotero-online'));
++    assert.calledTwice(request.withArgs('zotero-import-status'));
++    assert.calledTwice(wait);
++  });
++
++  it('reports failed and replaced jobs without claiming success', async () => {
++    for (const job of [
++      { id: 'test-job', state: 'failed', error: 'Zotero denied access' },
++      { id: 'different-job', state: 'completed', result: { references: 10 } },
++    ]) {
++      const request = sinon.stub();
++      request.onCall(0).resolves({ job: { id: 'test-job', state: 'queued' } });
++      request.onCall(1).resolves({ job });
++      let error;
++      try {
++        await importZoteroLibrary(
++          request,
++          'import-zotero-desktop',
++          async () => {},
++        );
++      } catch (caught) {
++        error = caught;
++      }
++      assert.instanceOf(error, Error);
++      assert.match(error.message, /denied access|import changed/);
++    }
++  });
++});
+diff --git a/src/sidebar/helpers/zotero.ts b/src/sidebar/helpers/zotero.ts
+new file mode 100644
+index 0000000..0a0d72f
+--- /dev/null
++++ b/src/sidebar/helpers/zotero.ts
+@@ -0,0 +1,29 @@
++type Request = (action: string) => Promise<Record<string, any>>;
++
++/** Keep individual worker requests short while the bridge reads a large library. */
++export async function importZoteroLibrary(
++  request: Request,
++  action: 'import-zotero-desktop' | 'import-zotero-online',
++  wait = () => new Promise(resolve => setTimeout(resolve, 1000)),
++) {
++  let result = await request(action);
++  if (!result.job) {
++    return result;
++  }
++  const id = result.job.id;
++  while (['queued', 'running'].includes(result.job.state)) {
++    await wait();
++    result = await request('zotero-import-status');
++    if (result.job?.id !== id) {
++      throw new Error(
++        'The Zotero import changed. Refresh the library to see the latest results.',
++      );
++    }
++  }
++  if (result.job.state !== 'completed') {
++    throw new Error(
++      result.job.error || 'Zotero import failed. Retry from Settings.',
++    );
++  }
++  return result.job.result as Record<string, any>;
++}
 diff --git a/src/sidebar/store/modules/annotation-visibility.ts b/src/sidebar/store/modules/annotation-visibility.ts
 new file mode 100644
 index 0000000..063ebc9

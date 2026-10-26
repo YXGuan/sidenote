@@ -133,6 +133,11 @@ work around them through another browser surface or hidden debugging transport.
   backfill, not a test; it fetches only already resolved public work IDs.
 - Markdown personal notes below the marker survive render/sync.
 - `activity/` is local visit history for saved pages; it is included in backups.
+- `imports/` retains original Zotero/file import evidence; `references/` stores
+  reference identities, citation fields, notes and tags. Both are included in
+  backups and remain separate from raw Hypothesis annotations and local overrides.
+  `test_zotero.py` covers file/desktop ingestion, repeated imports, note escaping,
+  citation exports, snapshots and authenticated bridge routes with synthetic data.
 - Automatic collection memberships are read-time values, separate from manual groups.
 - Credentials stay in ignored `.env`/`.local` files; never include them in fixtures,
   patches, preview data, URLs, logs or launch-agent definitions.

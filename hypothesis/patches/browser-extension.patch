@@ -443,10 +443,10 @@ index 0000000..cf24147
 +}
 diff --git a/src/background/local-research.ts b/src/background/local-research.ts
 new file mode 100644
-index 0000000..bcbbea6
+index 0000000..4675ba7
 --- /dev/null
 +++ b/src/background/local-research.ts
-@@ -0,0 +1,297 @@
+@@ -0,0 +1,318 @@
 +/** Local persistence behind the original Hypothesis UI. Never expose the key to a page. */
 +import { initSavedPageVisits } from './saved-page-visits';
 +
@@ -590,6 +590,20 @@ index 0000000..bcbbea6
 +      return request('/api/organization');
 +    case 'settings':
 +      return request('/api/settings');
++    case 'import-references':
++      return request('/api/references/import', message.values);
++    case 'import-zotero-desktop':
++      return request('/api/references/desktop', {});
++    case 'import-zotero-online':
++      return request('/api/references/online', {});
++    case 'zotero-connection':
++      return request('/api/zotero');
++    case 'zotero-import-status':
++      return request('/api/zotero/import');
++    case 'save-zotero-connection':
++      return request('/api/zotero', message.values);
++    case 'export-references':
++      return request('/api/references/export', message.values);
 +    case 'save-settings':
 +      return request('/api/settings', message.values);
 +    case 'backup':
@@ -715,6 +729,13 @@ index 0000000..bcbbea6
 +      [
 +        'account',
 +        'settings',
++        'import-references',
++        'import-zotero-desktop',
++        'import-zotero-online',
++        'zotero-connection',
++        'zotero-import-status',
++        'save-zotero-connection',
++        'export-references',
 +        'save-settings',
 +        'backup',
 +        'remove',
@@ -1164,10 +1185,10 @@ index 0000000..608cc9b
 +})();
 diff --git a/tests/background/local-research-test.js b/tests/background/local-research-test.js
 new file mode 100644
-index 0000000..76d39b1
+index 0000000..9bb9b61
 --- /dev/null
 +++ b/tests/background/local-research-test.js
-@@ -0,0 +1,210 @@
+@@ -0,0 +1,238 @@
 +import {
 +  handleResearchMessage,
 +  initLocalResearch,
@@ -1225,6 +1246,13 @@ index 0000000..76d39b1
 +
 +  for (const action of [
 +    'settings',
++    'import-references',
++    'import-zotero-desktop',
++    'import-zotero-online',
++    'zotero-connection',
++    'zotero-import-status',
++    'save-zotero-connection',
++    'export-references',
 +    'save-settings',
 +    'backup',
 +    'remove',
@@ -1285,6 +1313,27 @@ index 0000000..76d39b1
 +    assert.equal(url, 'http://127.0.0.1:8765/api/settings');
 +    assert.equal(options.method, 'POST');
 +    assert.deepEqual(JSON.parse(options.body), values);
++  });
++
++  it('forwards reference operations to the paired bridge', async () => {
++    fetchStub.callsFake(async () => new Response('{}'));
++    const values = { format: 'ris', content: 'TY  - JOUR\nER  -' };
++    for (const [action, path] of [
++      ['import-references', 'import'],
++      ['export-references', 'export'],
++      ['import-zotero-desktop', 'desktop'],
++      ['import-zotero-online', 'online'],
++    ]) {
++      await handleResearchMessage({ type: 'local-research', action, values });
++      const [url, options] = fetchStub.lastCall.args;
++      assert.equal(url, `http://127.0.0.1:8765/api/references/${path}`);
++      assert.equal(options.method, 'POST');
++      assert.deepEqual(
++        JSON.parse(options.body),
++        ['desktop', 'online'].includes(path) ? {} : values,
++      );
++      assert.equal(options.headers.Authorization, 'Bearer bridge-key');
++    }
 +  });
 +
 +  it('reads cached recommendations and forwards explicit refresh approval', async () => {

@@ -205,6 +205,13 @@ The **Research** workspace adds local natural-language retrieval, wiki exports,
 and graph browsing. Ask + web, related-term expansion, and topic synthesis are
 explicit model actions using that same signed-in CLI. See the [Research guide](../research-partner/docs/RESEARCH-WORKSPACE.md).
 
+### Optional Zotero connection
+
+Open **Settings → Zotero** to connect your personal/group online library using a
+dedicated Zotero API key, or read the desktop library on the same computer through
+its local API. Enter keys directly in Settings or the CLI's hidden prompt. RIS/CSL
+JSON file exchange is also available. See the [Zotero guide](ZOTERO.md).
+
 ## Verify the installation
 
 | Check | Command or observation | Expected result |

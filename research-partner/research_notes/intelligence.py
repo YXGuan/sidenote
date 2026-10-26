@@ -142,7 +142,7 @@ def codex_json(prompt, schema, *, binary=None, timeout=180, web=False):
         for feature in ("shell_tool", "unified_exec", "apps", "plugins", "hooks", "multi_agent", "browser_use", "computer_use", "image_generation", "skill_search", "view_image"):
             args.extend(["--disable", feature])
         args.extend(["--output-schema", str(schema_path), "--output-last-message", str(output_path), "-"])
-        env = {k: v for k, v in os.environ.items() if k not in ("HYPOTHESIS_TOKEN", "NOTES_BRIDGE_TOKEN", "S2_API_KEY", "OPENALEX_API_KEY")}
+        env = {k: v for k, v in os.environ.items() if k not in ("HYPOTHESIS_TOKEN", "NOTES_BRIDGE_TOKEN", "S2_API_KEY", "OPENALEX_API_KEY", "ZOTERO_API_KEY")}
         # A new process group lets timeout cleanup stop the entire CLI tree.
         process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, cwd=directory, env=env, text=True, start_new_session=True)
         try:

@@ -27,6 +27,10 @@ Original annotations, personal notes, metadata, edits, and backups are retained
 locally; hosted Hypothesis annotations are unchanged.
 
 **Settings** contains **Back up now**, **Enrich research**, and organization controls.
+
+**Settings → Zotero** connects to Zotero desktop or your synced online library, imports RIS
+or CSL JSON files, and exports references for Zotero. RIS can include highlights,
+comments, and personal notes. See the [Zotero guide](../docs/ZOTERO.md).
 Enable **Back up automatically every day**, choose a local time and public-only
 or authenticated imports, then **Save settings**. Daily backups default to off.
 The local service runs them with Chrome closed, catches up after sleep/restart,

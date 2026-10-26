@@ -34,20 +34,20 @@ def public_document(vault, doc):
         state = states.get(annotation["id"], {})
         if state.get("analysis"):
             state["analysis"]["stale"] = state["analysis"].get("input_hash") != annotation_digest(annotation)
-    return {k: doc[k] for k in ("id", "url", "title", "tags", "page_tags", "manual_tags", "auto_tags", "classification", "classification_source", "classification_manual", "summary", "activity", "groups", "created_at", "updated_at", "reaction", "metadata", "annotations", "automatic_collections", "collection_signals")} | {"analysis": analysis, "annotation_states": states, "excluded_auto_tags": doc["overrides"].get("excluded_auto_tags", [])}
+    return {k: doc[k] for k in ("id", "url", "title", "tags", "page_tags", "manual_tags", "auto_tags", "classification", "classification_source", "classification_manual", "summary", "activity", "groups", "created_at", "updated_at", "reaction", "metadata", "annotations", "automatic_collections", "collection_signals", "reference_notes", "reference_tags")} | {"analysis": analysis, "annotation_states": states, "excluded_auto_tags": doc["overrides"].get("excluded_auto_tags", [])}
 
 
 def library_document(vault, doc):
     from .store import quote_text
     fields = ("id", "url", "title", "manual_tags", "auto_tags", "classification", "classification_source", "summary", "activity", "groups", "reaction", "created_at", "updated_at", "metadata", "automatic_collections", "collection_signals")
     result = {key: doc[key] for key in fields}
-    result.update(tags=doc["manual_tags"], custom_title=doc["overrides"].get("title", ""), annotation_ids=[a["id"] for a in doc["annotations"]])
+    result.update(reference_tags=doc.get("reference_tags", []), tags=doc["manual_tags"], custom_title=doc["overrides"].get("title", ""), annotation_ids=[a["id"] for a in doc["annotations"]])
     result["annotation_activity"] = {}
     for annotation in doc["annotations"]:
         day = annotation.get("created", "")[:10]
         if day:
             result["annotation_activity"][day] = result["annotation_activity"].get(day, 0) + 1
-    result["search_text"] = "\n".join([vault.personal_notes(doc["id"])] + [a.get("text", "") + "\n" + quote_text(a) for a in doc["annotations"]])
+    result["search_text"] = "\n".join([vault.personal_notes(doc["id"])] + doc.get("reference_notes", []) + [a.get("text", "") + "\n" + quote_text(a) for a in doc["annotations"]])
     return result
 
 
@@ -58,6 +58,22 @@ def make_server(vault, port=8765):
     maintenance = Maintenance(vault)
     research_job = {"state": "idle"}
     recommendation_job = {"state": "idle"}
+    zotero_job = {"state": "idle"}
+
+    def run_zotero(source):
+        from .zotero import import_desktop, import_online
+        with job_lock:
+            zotero_job["state"] = "running"
+        try:
+            result = import_desktop(vault) if source == "desktop" else import_online(vault)
+            with job_lock:
+                zotero_job.update(state="completed", result=result)
+        except ValueError as error:
+            with job_lock:
+                zotero_job.update(state="failed", error=str(error))
+        except Exception:
+            with job_lock:
+                zotero_job.update(state="failed", error="Zotero import failed. Check connection settings and retry; existing notes are retained.")
 
     def run_recommendations():
         from .recommendations import refresh
@@ -228,6 +244,12 @@ def make_server(vault, port=8765):
                         self.send_json(200, {"job": dict(job), "enrichment": maintenance.status()["enrichment"], "backup": maintenance.status()["backup"], "settings": settings(vault)})
                 elif route.path == "/api/settings":
                     self.send_json(200, maintenance_settings(vault) | maintenance.status())
+                elif route.path == "/api/zotero":
+                    from .zotero import connection_settings
+                    self.send_json(200, connection_settings(vault))
+                elif route.path == "/api/zotero/import":
+                    with job_lock:
+                        self.send_json(200, {"job": dict(zotero_job)})
                 elif route.path == "/api/status":
                     from .store import read_json
                     self.send_json(200, {"user": vault.config().get("user"), "authenticated_sync_available": bool(vault.token()), "documents": len(vault.documents()), "last_sync": read_json(vault.root / ".local/last-sync.json")})
@@ -245,13 +267,39 @@ def make_server(vault, port=8765):
                 return
             try:
                 size = int(self.headers.get("Content-Length", "0"))
-                if not 0 < size <= 262144:
+                limit = 12_000_000 if self.path == "/api/references/import" else 262144
+                if not 0 < size <= limit:
                     self.send_json(413, {"error": "Invalid request size"})
                     return
                 body = json.loads(self.rfile.read(size))
                 if not isinstance(body, dict):
                     raise ValueError("Expected an object")
-                if self.path == "/api/recommendations":
+                if self.path == "/api/zotero":
+                    from .zotero import save_connection
+                    self.send_json(200, save_connection(vault, body))
+                    return
+                elif self.path in ("/api/references/online", "/api/references/desktop"):
+                    source = self.path.rsplit("/", 1)[1]
+                    with job_lock:
+                        if zotero_job["state"] in ("queued", "running"):
+                            self.send_json(409, {"error": "A Zotero import is running. Wait for it to finish before starting another."})
+                            return
+                        zotero_job.clear()
+                        zotero_job.update(id=uuid4().hex, state="queued", source=source)
+                        status = dict(zotero_job)
+                    threading.Thread(target=run_zotero, args=(source,), daemon=True).start()
+                    self.send_json(202, {"job": status})
+                    return
+                elif self.path == "/api/references/import":
+                    from .zotero import import_file
+                    result = import_file(vault, body.get("content"), body.get("format", "ris"))
+                    self.send_json(200, result)
+                    return
+                elif self.path == "/api/references/export":
+                    from .zotero import export_library
+                    self.send_json(200, export_library(vault, format=body.get("format", "ris"), include_notes=body.get("include_notes", False), document_ids=body.get("document_ids")))
+                    return
+                elif self.path == "/api/recommendations":
                     if body.get("approved") is not True:
                         raise ValueError("Choose Refresh recommendations to send paper identifiers and unresolved paper titles to Semantic Scholar")
                     with job_lock:

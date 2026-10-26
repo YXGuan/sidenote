@@ -47,7 +47,7 @@ def corpus(vault):
         meta = doc["metadata"]
         base = {"document_id": doc["id"], "title": doc["title"], "source_url": doc["url"],
                 "topics": topics, "authors": meta.get("authors", []), "reaction": doc["reaction"]}
-        source_text = "\n".join(str(s) for s in [doc["title"], meta.get("abstract", ""), meta.get("description", "")] if s)
+        source_text = "\n".join(str(s) for s in [doc["title"], meta.get("abstract", ""), meta.get("description", ""), *doc.get("reference_notes", [])] if s)
         personal_note = vault.personal_notes(doc["id"])
         text = "\n".join(filter(None, [source_text, personal_note]))
         records.append(base | {"id": "source:" + doc["id"], "kind": "links", "url": doc["url"], "text": text,

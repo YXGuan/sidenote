@@ -36,6 +36,21 @@ def parser():
     fetch.add_argument("--analyze", action="store_true", help="Send changed notes to headless Codex for tag/stance suggestions")
     listing = commands.add_parser("list", help="List document IDs for editing")
     listing.add_argument("--json", action="store_true")
+    references = commands.add_parser("zotero", help="Import Zotero references or export a Zotero-compatible file")
+    reference_commands = references.add_subparsers(dest="zotero_action", required=True)
+    reference_import = reference_commands.add_parser("import", help="Import a UTF-8 RIS or CSL JSON file")
+    reference_import.add_argument("file")
+    reference_import.add_argument("--format", choices=("ris", "csl-json"))
+    reference_commands.add_parser("desktop", help="Read references and notes from the running Zotero desktop app")
+    reference_commands.add_parser("online", help="Read your configured Zotero online library")
+    connection = reference_commands.add_parser("configure", help="Configure online access using a hidden API key prompt")
+    connection.add_argument("--library-type", choices=("users", "groups"), default="users")
+    connection.add_argument("--library-id", required=True)
+    reference_export = reference_commands.add_parser("export", help="Write references for Zotero File → Import")
+    reference_export.add_argument("file")
+    reference_export.add_argument("--format", choices=("ris", "csl-json"), default="ris")
+    reference_export.add_argument("--include-notes", action="store_true", help="Include highlights, comments and personal notes in RIS")
+    reference_export.add_argument("--document", action="append", dest="document_ids", help="Export only this document ID (repeatable)")
     search = commands.add_parser("search", help="Search the local Markdown library")
     search.add_argument("query")
     find = commands.add_parser("find", help="Natural-language library search with BM25 and optional model query expansion")
@@ -133,6 +148,30 @@ def main(argv=None):
                 if not (vault.root / ".git").exists():
                     subprocess.run([git, "init", "--quiet", str(vault.root)], check=True)
             print(f"Vault ready: {vault.root}\nUser: {args.user}\nLocal categorization runs automatically after imports.\nNext: ./notes sync --public-only (or ./notes configure for private annotations)")
+        elif args.command == "zotero":
+            from .zotero import MAX_BYTES, export_library, import_desktop, import_file, import_online, save_connection, validate_connection
+            if args.zotero_action == "import":
+                path = Path(args.file).expanduser()
+                if path.stat().st_size > MAX_BYTES:
+                    raise ValueError("Reference file must be at most 10 MB")
+                format = args.format or ("ris" if path.suffix.lower() == ".ris" else "csl-json")
+                print_json(import_file(vault, path.read_text(encoding="utf-8-sig"), format))
+            elif args.zotero_action == "desktop":
+                print_json(import_desktop(vault))
+            elif args.zotero_action == "online":
+                print_json(import_online(vault))
+            elif args.zotero_action == "configure":
+                validate_connection(args.library_type, args.library_id)
+                key = getpass.getpass("Zotero API key (input hidden; blank keeps saved key): ").strip()
+                print_json(save_connection(vault, {"library_type": args.library_type, "library_id": args.library_id, **({"api_key": key} if key else {})}))
+            else:
+                from .store import atomic_write
+                result = export_library(vault, format=args.format, include_notes=args.include_notes, document_ids=args.document_ids)
+                path = Path(args.file).expanduser()
+                if path.exists():
+                    raise ValueError("Export destination already exists; choose a new filename")
+                atomic_write(path, result["content"])
+                print_json({"file": str(path), "references": result["references"]})
         elif args.command == "configure":
             if not vault.config().get("user"):
                 raise ValueError("Initialize this vault first")

@@ -111,7 +111,12 @@ try {
               data: { total: 0, offset: 0, limit: 50, results: [] },
             };
           }
-          return original(message);
+          const result = await original(message);
+          if (result.data?.document) {
+            result.data.document.reference_notes = Array.from({ length: 45 }, (_, index) => `Synthetic Zotero note ${index}`);
+            result.data.document.reference_tags = Array.from({ length: 45 }, (_, index) => `Synthetic Zotero tag ${index}`);
+          }
+          return result;
         };
         Object.defineProperty(globalThis, 'chrome', {
           configurable: true,
@@ -208,6 +213,16 @@ try {
     .click();
   await route('#/collections/Likes/pages/demo-0');
   await details.waitFor();
+  const importedNotes = details.getByRole('region', { name: 'Imported reference notes', exact: true });
+  const importedTags = details.getByRole('region', { name: 'Imported reference tags', exact: true });
+  await importedNotes.getByRole('status', { name: 'imported notes: showing 20 of 45', exact: true }).waitFor();
+  await importedTags.getByRole('status', { name: 'imported tags: showing 20 of 45', exact: true }).waitFor();
+  await importedNotes.getByRole('button', { name: 'Show more imported notes', exact: true }).click();
+  await importedNotes.getByRole('status', { name: 'imported notes: showing 40 of 45', exact: true }).waitFor();
+  await importedTags.getByRole('status', { name: 'imported tags: showing 20 of 45', exact: true }).waitFor();
+  await importedNotes.getByRole('button', { name: 'Show more imported notes', exact: true }).click();
+  await importedNotes.getByRole('status', { name: 'imported notes: showing 45 of 45', exact: true }).waitFor();
+  assert.equal(await importedNotes.getByRole('button', { name: 'Show more imported notes', exact: true }).count(), 0);
   await page.reload();
   await details.waitFor();
   await page
@@ -348,6 +363,11 @@ try {
   const openalexKey = page.getByLabel('OpenAlex API key', { exact: true });
   const saveSettings = page.getByRole('button', { name: 'Save settings', exact: true });
   const mode = page.getByRole('combobox', { name: 'Color mode', exact: true });
+  await page.getByRole('region', { name: 'Zotero integration', exact: true }).waitFor();
+  await page.getByLabel('Zotero API key', { exact: true }).waitFor();
+  assert.equal(await page.getByLabel('Zotero API key', { exact: true }).inputValue(), '');
+  assert.equal(await page.getByRole('button', { name: 'Import from Zotero online', exact: true }).isDisabled(), true);
+  assert.equal(await page.getByRole('button', { name: 'Import from Zotero desktop', exact: true }).isEnabled(), true);
   const expectMode = value => page.waitForFunction(value => document.querySelector('.ld-app')?.getAttribute('data-color-scheme') === value, value);
   await mode.selectOption('system');
   await page.emulateMedia({ colorScheme: 'dark' });

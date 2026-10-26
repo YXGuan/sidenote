@@ -9,7 +9,7 @@ import threading
 from .hypothesis import sync
 from .store import atomic_write, encoded, now, read_json
 
-API_KEYS = ("OPENALEX_API_KEY", "S2_API_KEY")
+API_KEYS = ("OPENALEX_API_KEY", "S2_API_KEY", "ZOTERO_API_KEY")
 
 
 def preferences(vault):

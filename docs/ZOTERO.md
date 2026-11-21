@@ -1,6 +1,7 @@
 # Connect Zotero to sidenote
 
-Open sidenote's **Settings → Zotero**. You can read the desktop library directly,
+Open sidenote's **Settings** and select **Zotero** under Integrations; its row shows
+whether an online library is connected. You can read the desktop library directly,
 or connect your synced personal/group library through Zotero's online API.
 Both save references and notes to your local vault. Imports do not modify Zotero.
 
@@ -10,7 +11,7 @@ Both save references and notes to your local vault. Imports do not modify Zotero
    dedicated key with read access to your library and notes; write access is not
    needed. Note the numeric user ID shown there. For a group library, use its
    numeric group ID and grant the key access to that group.
-2. Under **Settings → Zotero → Connect your online library**, choose Personal or
+2. Under **Settings → Zotero → Online library**, choose Personal or
    Group, enter that ID and API key, then **Save Zotero connection**. Enter the key
    directly in the local form or hidden CLI prompt; do not put it in chat.
 3. Choose **Import from Zotero online**. Repeat to refresh from your synced library.
@@ -63,7 +64,7 @@ directory contains connection credentials. Imported text is treated as data.
 
 To bring selected Zotero items into sidenote, select them in Zotero, choose
 **Export Items**, select **RIS**, and enable **Export notes**. In sidenote, choose
-that `.ris` file under **Settings → Zotero → Import reference file**. CSL JSON
+that `.ris` file under **Settings → Zotero → Import or export a file**. CSL JSON
 exports (`.json`) are also supported for references only. Files must contain
 UTF-8 text and be no larger than 10 MB.
 

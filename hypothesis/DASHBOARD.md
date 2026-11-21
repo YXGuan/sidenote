@@ -26,7 +26,11 @@ the page from library counts, collections, research inputs, and visit tracking.
 Original annotations, personal notes, metadata, edits, and backups are retained
 locally; hosted Hypothesis annotations are unchanged.
 
-**Settings** contains **Back up now**, **Enrich research**, and organization controls.
+**Settings** lists each setting as one row showing its current state; select a row to
+open its options. **Backup** holds **Back up now**, **Research enrichment** holds
+**Enrich research**, and **Automatic organization** holds the organization controls.
+Changes to backup, enrichment, and API keys appear in an unsaved-changes bar with
+**Save settings** and **Discard**.
 
 **Settings → Zotero** connects to Zotero desktop or your synced online library, imports RIS
 or CSL JSON files, and exports references for Zotero. RIS can include highlights,
@@ -86,7 +90,7 @@ Collection names and identifiers are URL encoded. Kura cluster links append
 work; an explicit hash route takes precedence. Opening a route reads existing
 results; model actions still require their explicit action buttons.
 
-**Settings → Developer mode → Enable developer mode** reveals experimental
+**Settings → Developer mode** reveals experimental
 **Wiki** and **Knowledge graph** tabs under Research. Developer mode defaults to
 off and is saved automatically in this browser. Existing Wiki and graph URLs
 retain their destination and offer an enable button when the mode is off;
@@ -115,7 +119,7 @@ only an identifier shows the control as unavailable until a source URL exists.
 **Compact** is the only layout. Previous layout preferences and old design links
 open Compact while preserving saved sorting and the requested page or tab.
 Use the header's **Dark mode** / **Light mode** button for a quick switch, or
-**Settings → Appearance → Color mode** to choose **Light**, **Dark**, or **System**.
+**Settings → Color mode** to choose **Light**, **Dark**, or **System**.
 The choice is remembered in this browser and System follows operating-system
 changes. Dark mode uses Console's graphite surfaces, pale text, amber selection,
 and bundled Host Grotesk typography across the library, dashboard, collections,

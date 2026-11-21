@@ -1,119 +1,203 @@
-<img src="assets/sidenote.svg" width="64" height="64" alt="sidenote logo">
+<div align="center">
+
+<img src="assets/sidenote.svg" width="88" height="88" alt="sidenote logo">
 
 # sidenote
 
+**A local-first research library built on the Hypothesis web annotator.**
 
+Annotate papers in your browser as usual. sidenote turns those highlights and comments
+into a searchable library, topic map, and Markdown notes vault that stays on your machine.
 
-# How it got started:
+[![Checks](https://github.com/YXGuan/sidenote/actions/workflows/checks.yml/badge.svg)](https://github.com/YXGuan/sidenote/actions/workflows/checks.yml)
+[![License: BSD-2-Clause](https://img.shields.io/badge/license-BSD--2--Clause-48658a.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](docs/SETUP.md#prerequisites)
+[![Node.js 22+](https://img.shields.io/badge/node-22%2B-5FA04E?logo=nodedotjs&logoColor=white)](docs/SETUP.md#prerequisites)
+[![Chrome extension](https://img.shields.io/badge/chrome-extension-4285F4?logo=googlechrome&logoColor=white)](#quick-start)
 
-I have found myself reading a LOT more research papers nowadays
+[Features](#features) · [Quick start](#quick-start) · [How it works](#how-it-works) · [Privacy](#privacy) · [Docs](#documentation) · [Roadmap](#roadmap)
 
-where I read, where I take notes, where I ask questions are all very scattered
+<br>
 
-it has become very hard to organize knowledge and learning ( such as recalling the name of the paper or a conceptI read when I need them)
+<img src="image/README/1792875207516.png" width="100%" alt="sidenote library view: saved papers with topics, authors, annotation counts, and quick actions">
 
-there's too much manual housekeeping, fragmented apps/ecosystem
+</div>
 
-Then I found out about [hypothes.is](https://hypothes.is/), where I immediately fell in love with their browser plug in, I think they have the BEST in-browser annotation.
+> [!NOTE]
+> sidenote is an independent, early-stage project. It runs as a local backend plus an
+> unpacked Chrome extension, so expect some setup. See [Quick start](#quick-start).
 
-However it's missing some features and we could make it even better:
+## Why sidenote?
 
-1. analytics: better search, recommendation
-2. automation: it's still too much manual housekeeping
-3. ...
+I've been reading a *lot* of research papers. Where I read, where I take notes, and
+where I ask questions were scattered across different apps. Recalling a paper or a concept
+when I needed it took too much manual housekeeping.
 
-so I vibe coded this repo
+[Hypothesis](https://hypothes.is/) has the best in-browser annotation I've used, so
+sidenote keeps it and adds what was missing:
 
-![1792875207516](image/README/1792875207516.png)
+- **Analytics:** better search, topic analysis, and paper recommendations.
+- **Automation:** metadata, tags, and collections that maintain themselves.
+- **Ownership:** your library and notes live in a local vault you control.
 
-Topical analysis
+## Features
 
-![1792875350625](image/README/1792875350625.png)
+- **Library:** search across papers, notes, authors, and ideas, with filters,
+  editable metadata, and collections.
+- **Topic analysis:** offline topic labels from an [editable taxonomy](research-partner/research_notes/taxonomy.json),
+  plus automatic *Liked*, *Questions*, and *Visit often* collections.
+- **Research workspace:** library retrieval, a cited Wiki, a knowledge graph, and an
+  optional Kura atlas and model-assisted tools.
+- **[Paper recommendations](docs/RECOMMENDATIONS.md):** Semantic Scholar suggestions seeded
+  from your *Liked (Auto)* collection, cached locally until you choose to refresh.
+- **Citation metadata:** authors, venue, DOI, and arXiv ID are extracted automatically,
+  like Zotero or Mendeley.
+- **[Zotero import](docs/ZOTERO.md):** bring in references and notes from Zotero desktop
+  or your online library (read-only).
 
-Dashboard
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <b>Topic analysis</b><br>
+      <sub>Browse your reading as a topic hierarchy, map, or size chart.</sub><br><br>
+      <img src="image/README/1792875350625.png" width="100%" alt="Topic hierarchy with a description of the selected topic">
+    </td>
+    <td width="50%" valign="top">
+      <b>Reading dashboard</b><br>
+      <sub>Track saved pages, annotations, visits, and resolved papers over time.</sub><br><br>
+      <img src="image/README/1792875435414.png" width="100%" alt="Reading dashboard with weekly activity chart">
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <b>Recommendations</b><br>
+      <sub>Related papers from Semantic Scholar, based on what you liked.</sub><br><br>
+      <img src="image/README/1792875400903.png" width="100%" alt="Recommended papers list with authors, year, and citation counts">
+    </td>
+    <td width="50%" valign="top">
+      <b>Enhanced Hypothesis sidebar</b><br>
+      <sub>Reactions, groups, auto tags, and citation details next to the paper.</sub><br><br>
+      <img src="image/README/1792875643425.png" width="100%" alt="Hypothesis sidebar showing reactions, tags, and extracted citation metadata beside a PDF">
+    </td>
+  </tr>
+</table>
 
-![1792875435414](image/README/1792875435414.png)
+## Quick start
 
-Recommendations ( using S2 rec api)
-
-![1792875400903](image/README/1792875400903.png)
-
-Some changes to the sidebar in Hypothesis
-
-![1792875643425](image/README/1792875643425.png)
-
-(auto extract biblographic meta data just like Zotero or Mendeley)
-
-Note:
-
-all the extra features stay locally
-
-AI Generated Notes below:
-
-**sidenote** extends the Hypothesis browser extension with a local research
-library and Markdown notes vault. This independent, early-stage project requires
-a local backend and an unpacked Chrome extension.
-
-## Setup
-
-Requires Python 3.10+ with pip, Node.js 22+, Git, Make, rsync, and Chrome.
+**Requirements:** Python 3.10+ with pip, Node.js 22+, Git, Make, rsync, Chrome (or another
+Chromium browser), and a [Hypothesis](https://hypothes.is/) username.
 
 ```sh
 git clone https://github.com/YXGuan/sidenote.git
 cd sidenote
-./setup --check
+./setup --check                                         # read-only prerequisite check
 ./setup --user YOUR_HYPOTHESIS_USERNAME --install-service
 ```
 
-On other Unix systems, omit `--install-service` and run the printed foreground
-bridge command separately. Setup installs local dependencies, initializes or
-reuses your vault, and builds the extension.
+`--install-service` sets up a persistent background service on macOS. On other Unix systems,
+leave it out and run the printed bridge command in a separate terminal. Native Windows is
+not yet documented. Setup installs local dependencies, creates or reuses your vault, and
+builds the extension.
 
-In `chrome://extensions`, enable **Developer mode → Load unpacked** and select
-`hypothesis/browser-extension/build/`. Pair in **Extension options → Local
-research** using the key from `./research-partner/notes pair`, then open the local
-library. Keep the pairing key private.
+Then connect the browser:
 
-See [the setup guide](docs/SETUP.md) for verification, optional imports, and
-troubleshooting. For agent-assisted installation, use the prompt in that guide;
-agent instructions live in [AGENTS.md](AGENTS.md).
+1. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and
+   select `hypothesis/browser-extension/build/`.
+2. Run `./research-partner/notes pair` to get a pairing key.
+3. In the extension's **Options → Local research**, enter the key and open the local library.
 
-## Features
+> [!TIP]
+> Prefer to have a coding agent do it? [The setup guide](docs/SETUP.md#clone-then-ask-your-agent)
+> has a copy-paste prompt for Claude Code or Codex. It also covers verification, optional
+> imports, and troubleshooting.
 
-- **Library:** search, filters, editable metadata, dashboards, and collections.
-- **Local analysis:** topic labels, automatic liked/question collections, and
-  saved-page visit tracking.
-- **Research:** library retrieval, a cited Wiki, knowledge graph, and optional
-  Kura atlas and model-assisted tools.
-- **[Paper recommendations](docs/RECOMMENDATIONS.md):** Semantic Scholar suggestions
-  seeded from Liked (Auto), cached locally until you request a refresh.
+> [!WARNING]
+> Keep your pairing key private. It authorizes access to your local library.
 
-Baseline setup needs no API key or LLM account. Local metadata and collections
-stay in your vault; Hypothesis publishing/sync, scholarly services, and model
-features are separate optional workflows. Recommendation refresh sends paper
-identifiers and unmatched titles to Semantic Scholar. See
-[security and data boundaries](SECURITY.md).
+## How it works
 
-Future work includes easier installation, broader support for everyday reading,
-and more ways to revisit saved ideas.
+sidenote is not a separate reader. It extends the official Hypothesis client and browser
+extension through [tracked patches](hypothesis/patches/), so annotating, publishing, and
+sharing still work the way they do in Hypothesis. Everything sidenote adds goes through an
+authenticated bridge on `127.0.0.1` into a vault you own.
+
+```mermaid
+flowchart LR
+    ext["Browser extension<br/>(Hypothesis + sidenote)"]
+    hyp[("Hypothesis service")]
+    bridge["Local bridge<br/>127.0.0.1"]
+    vault[("Your vault<br/>JSON + Markdown")]
+    apis["Scholarly APIs<br/>(optional)"]
+    zot["Zotero<br/>(optional, read-only)"]
+
+    ext -- "annotations" --> hyp
+    ext -- "paired key" --> bridge
+    bridge --> vault
+    bridge -. "lookups" .-> apis
+    zot -. "import" .-> bridge
+```
+
+See [architecture](research-partner/docs/ARCHITECTURE.md) for integration points,
+storage, and recovery snapshots.
+
+## Privacy
+
+The baseline setup needs no API key and no LLM account.
+
+| What | Where it goes |
+| --- | --- |
+| Metadata, tags, reactions, collections, Markdown notes | Your local vault only |
+| Topic analysis and automatic collections | Computed offline on your machine |
+| Annotations you publish | Hypothesis, through its normal workflow |
+| Recommendation refresh (only when you ask) | Paper IDs and unmatched titles → Semantic Scholar |
+| Scholarly enrichment (optional) | Bibliographic lookups → Semantic Scholar, OpenAlex, Crossref |
+| Zotero import (optional) | Read-only requests to Zotero desktop or `api.zotero.org` |
+
+Model-assisted features are opt-in and need explicit authorization. See
+[security and data boundaries](SECURITY.md) for details.
 
 ## Documentation
 
-- [Library features](hypothesis/DASHBOARD.md) and
-  [Research workspace](research-partner/docs/RESEARCH-WORKSPACE.md)
-- [Classification](research-partner/docs/CLASSIFICATION.md) and
-  [editable taxonomy](research-partner/research_notes/taxonomy.json)
-- [Development and checks](docs/DEVELOPMENT.md),
-  [native extension](hypothesis/README.md), and [backend](research-partner/README.md)
+| Guide | Covers |
+| --- | --- |
+| [Setup](docs/SETUP.md) | Install, agent prompt, verification, imports, troubleshooting |
+| [Library features](hypothesis/DASHBOARD.md) | Library, dashboard, and collections |
+| [Research workspace](research-partner/docs/RESEARCH-WORKSPACE.md) | Retrieval, Wiki, knowledge graph, Kura atlas |
+| [Recommendations](docs/RECOMMENDATIONS.md) | How seeds are chosen and what is sent |
+| [Zotero](docs/ZOTERO.md) | Desktop and online library import |
+| [Classification](research-partner/docs/CLASSIFICATION.md) | Topic labeling and the editable taxonomy |
+| [Architecture](research-partner/docs/ARCHITECTURE.md) | Integration points, storage, and recovery |
+| [Development](docs/DEVELOPMENT.md) | Builds, checks, and the patch workflow |
+| [Native extension](hypothesis/README.md) · [Backend](research-partner/README.md) | Subsystem references |
+| [Feature map](docs/FEATURE-MAP.md) | How sidenote compares with other research tools |
 
-## Borrowed foundations and acknowledgements
+## Roadmap
 
-Built on [Hypothesis](https://github.com/hypothesis). Other foundations
-include Kura, Karpathy's LLM Wiki pattern, Hallmark, NLTK/VADER, rank-bm25,
-NetworkX, and Cytoscape.js. Optional integrations use Semantic Scholar, OpenAlex,
-Crossref, and Zotero's translation server. Full sources and notices are in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- [x] Local library, topic analysis, and reading dashboard
+- [x] Semantic Scholar recommendations
+- [x] Zotero import (desktop and online)
+- [ ] Easier installation
+- [ ] Broader support for everyday reading beyond research papers
+- [ ] More ways to revisit saved ideas
 
-sidenote uses [BSD-2-Clause](LICENSE) and retains the
-[original project notice](third_party/licenses/productivity.txt). Borrowed code
-and assets retain their own licenses. See [contributing](CONTRIBUTING.md).
+## Contributing
+
+Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[development guide](docs/DEVELOPMENT.md). If you work with a coding agent, its
+instructions are in [AGENTS.md](AGENTS.md). Report security issues privately as described
+in [SECURITY.md](SECURITY.md).
+
+## Acknowledgements
+
+Built on [Hypothesis](https://github.com/hypothesis). Other foundations include
+[Kura](https://github.com/jxnl/kura),
+[Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f),
+[Hallmark](https://github.com/nutlope/hallmark), NLTK/VADER, rank-bm25, NetworkX, and
+Cytoscape.js. Optional integrations use Semantic Scholar, OpenAlex, Crossref, Zotero,
+and Zotero's translation server. Full sources and notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## License
+
+sidenote is released under the [BSD-2-Clause](LICENSE) license and retains the
+[original project notice](third_party/licenses/productivity.txt). Borrowed code and assets
+keep their own licenses.

@@ -70,7 +70,7 @@ sample, measure coverage/false positives/abstention per domain, introduce option
 subject packs and editable labels, and version migrations so manual corrections
 and older derived results remain understandable. Avoid simply adding generic
 keywords: words such as “model,” “portfolio,” and “treatment” are ambiguous.
-The [public roadmap](../../README.md#future-plan-from-research-workspace-to-everyday-reading)
+The [public roadmap](../../README.md#roadmap)
 keeps these tasks separate from the current research-focused implementation.
 
 ## Current implementation

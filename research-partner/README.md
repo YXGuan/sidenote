@@ -12,7 +12,7 @@ not distributed with the repository.
 repositories in `../hypothesis/` provide the interface.
 
 **First install:** use [the complete setup guide](../docs/SETUP.md), or the
-[agent setup prompt](../README.md#clone-and-hand-setup-to-your-agent). It installs
+[agent setup prompt](../docs/SETUP.md#clone-then-ask-your-agent). It installs
 dependencies, initializes your username/vault and builds the extension in order.
 The commands below are reference/maintenance commands, not a substitute for
 initializing a fresh vault. [AGENTS.md](../AGENTS.md) maps source and data boundaries.

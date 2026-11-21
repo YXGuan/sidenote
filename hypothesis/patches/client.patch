@@ -1189,7 +1189,7 @@ index a01ed4d..4606aed 100644
      directLinkedModule,
      draftsModule,
 diff --git a/src/styles/sidebar/sidebar.css b/src/styles/sidebar/sidebar.css
-index 9b0f176..1271aa3 100644
+index 9b0f176..80f7e11 100644
 --- a/src/styles/sidebar/sidebar.css
 +++ b/src/styles/sidebar/sidebar.css
 @@ -145,6 +145,200 @@
@@ -1393,7 +1393,7 @@ index 9b0f176..1271aa3 100644
  @layer components {
    /* Style a background to contain a vertical dashed line, horizontally-
       centered, that gets darker on hover.
-@@ -192,3 +386,2612 @@
+@@ -192,3 +386,2935 @@
  body {
    @apply font-sans text-base;
  }
@@ -2367,73 +2367,370 @@ index 9b0f176..1271aa3 100644
 +  background: var(--ld-surface, #fff);
 +  font-size: 11px;
 +}
-+.ld-settings {
-+  display: flex;
-+  align-items: center;
-+  gap: 16px;
-+  margin-bottom: 20px;
-+}
++/* Settings: grouped rows. State is visible at a glance; options open in place. */
 +.ld-settings-page {
-+  max-width: 900px;
++  --ld-set-hint: color-mix(in oklab, var(--ld-muted) 78%, var(--ld-ink));
++  --ld-set-error: #b23a2b;
++  --ld-set-hover: color-mix(in oklab, var(--ld-ink) 4%, transparent);
++  --ld-set-field-line: var(
++    --ld-control-line,
++    color-mix(in oklab, var(--ld-line) 60%, var(--ld-muted))
++  );
++  display: grid;
++  gap: 32px;
++  max-width: 720px;
 +}
 +.ld-settings-page fieldset {
-+  display: grid;
-+  gap: 20px;
 +  border: 0;
 +  padding: 0;
++  margin: 0;
 +  min-width: 0;
 +}
-+.ld-settings-page .ld-panel {
-+  display: grid;
-+  gap: 14px;
++.ld-settings-page :is(p, .ld-hint, .ld-set-summary) {
++  hyphens: manual;
++}
++.ld-settings-page .ld-hint {
++  color: var(--ld-set-hint);
++  font-size: 12px;
++  line-height: 1.55;
++  max-width: 65ch;
++  text-wrap: pretty;
++}
++.ld-set-group > h2 {
++  margin: 0 0 10px 2px;
++  color: var(--ld-set-hint);
++  font-size: 13px;
++  font-weight: 600;
++  letter-spacing: 0;
++}
++.ld-set-list {
++  overflow: clip;
++  border: 1px solid var(--ld-line);
++  border-radius: 10px;
++  background: var(--ld-surface, #fff);
++}
++.ld-set-list > * + * {
++  border-top: 1px solid var(--ld-line);
++}
++.ld-set-row {
++  display: block;
 +  margin: 0;
 +}
-+.ld-settings-page > .ld-settings {
-+  margin-top: 24px;
++.ld-set-inline,
++.ld-set-disclosure > summary {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  gap: 16px;
++  min-height: 60px;
++  padding: 12px 16px;
 +}
-+.ld-settings-page h2 {
-+  font-size: 18px;
++.ld-set-inline {
++  cursor: pointer;
 +}
-+.ld-settings-page p {
-+  line-height: 1.6;
++.ld-set-text {
++  display: grid;
++  gap: 2px;
++  min-width: 0;
 +}
-+.ld-settings-page .ld-button {
-+  justify-self: start;
++.ld-set-title {
++  color: var(--ld-ink);
++  font-size: 14px;
++  font-weight: 500;
++  line-height: 1.35;
 +}
++.ld-set-summary {
++  color: var(--ld-set-hint);
++  font-size: 12.5px;
++  line-height: 1.4;
++}
++.ld-set-summary[data-tone='error'],
++.ld-set-error {
++  color: var(--ld-set-error);
++}
++.ld-set-disclosure > summary {
++  cursor: pointer;
++  list-style: none;
++  transition: background-color 150ms ease-out;
++}
++.ld-set-disclosure > summary::-webkit-details-marker {
++  display: none;
++}
++.ld-set-disclosure > summary:hover {
++  background: var(--ld-set-hover);
++}
++.ld-app .ld-set-disclosure > summary:focus-visible {
++  outline-offset: -2px;
++}
++.ld-set-chevron {
++  flex-shrink: 0;
++  color: var(--ld-set-hint);
++  transition: transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
++}
++.ld-set-disclosure[open] > summary .ld-set-chevron {
++  transform: rotate(90deg);
++}
++.ld-set-body {
++  display: grid;
++  gap: 18px;
++  padding: 2px 16px 20px;
++  animation: ld-set-reveal 200ms cubic-bezier(0.25, 1, 0.5, 1);
++}
++@keyframes ld-set-reveal {
++  from {
++    opacity: 0;
++    transform: translateY(-4px);
++  }
++}
++.ld-set-stack {
++  display: grid;
++  gap: 14px;
++}
++.ld-set-sub {
++  display: grid;
++  gap: 12px;
++  padding-top: 18px;
++  border-top: 1px solid var(--ld-line);
++}
++.ld-set-sub h3 {
++  margin: 0;
++  color: var(--ld-ink);
++  font-size: 13.5px;
++  font-weight: 600;
++}
++.ld-set-toggle {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  gap: 16px;
++  color: var(--ld-ink);
++  font-size: 13.5px;
++  cursor: pointer;
++}
++.ld-set-toggle > span {
++  display: grid;
++  gap: 2px;
++}
++.ld-set-field,
 +.ld-settings-page .ld-choice {
++  display: grid;
++  gap: 6px;
++  justify-items: stretch;
++  max-width: 360px;
++}
++.ld-set-field > span,
++.ld-settings-page .ld-choice > span {
++  display: block;
++  color: var(--ld-ink);
++  font-size: 12.5px;
++  font-weight: 500;
++}
++.ld-settings-page .ld-set-field :is(input, select),
++.ld-settings-page .ld-choice select,
++.ld-settings-page .ld-set-select {
++  width: 100%;
++  max-width: none;
++  min-height: 36px;
++  padding: 6px 10px;
++  border: 1px solid var(--ld-set-field-line);
++  border-radius: 6px;
++  background: var(--ld-input, #fff);
++  color: var(--ld-ink);
++  font-size: 13px;
++}
++.ld-settings-page .ld-set-select {
++  width: auto;
++  min-width: 112px;
++  flex-shrink: 0;
++}
++.ld-set-field input::placeholder {
++  color: var(--ld-set-hint);
++  opacity: 1;
++}
++.ld-set-pair {
++  display: grid;
++  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
++  gap: 12px;
++  max-width: 480px;
++}
++.ld-set-pair .ld-set-field {
++  max-width: none;
++}
++.ld-set-key {
++  display: flex;
++  flex-wrap: wrap;
++  align-items: baseline;
++  gap: 6px 12px;
++}
++.ld-set-key .ld-set-field {
++  flex: 1 0 100%;
++  max-width: none;
++}
++.ld-set-key .ld-set-field input {
++  max-width: 360px;
++}
++.ld-set-actions {
++  display: flex;
++  flex-wrap: wrap;
++  align-items: center;
++  gap: 10px 14px;
++}
++.ld-settings-page .ld-set-actions input[type='file'] {
++  max-width: 100%;
++  color: var(--ld-set-hint);
++  font-size: 12.5px;
++}
++.ld-settings-page input[type='file']::file-selector-button {
++  margin-right: 10px;
++  padding: 7px 12px;
++  border: 1px solid var(--ld-set-field-line);
++  border-radius: 6px;
++  background: var(--ld-surface, #fff);
++  color: var(--ld-ink);
++  font: inherit;
++  font-weight: 500;
++  cursor: pointer;
++}
++.ld-settings-page input[type='file']::file-selector-button:hover {
++  border-color: var(--ld-accent);
++}
++.ld-settings-page .ld-set-link {
++  padding: 0;
++  border: 0;
++  background: none;
++  color: var(--ld-accent);
++  font-size: 12.5px;
++  font-weight: 500;
++}
++.ld-set-link:hover {
++  text-decoration: underline;
++}
++.ld-set-error {
++  margin: 0;
++  font-size: 12.5px;
++  line-height: 1.5;
++}
++div.ld-set-error {
 +  display: grid;
 +  justify-items: start;
 +  gap: 6px;
 +}
-+.ld-settings-page .ld-choice > span {
-+  display: block;
-+  color: var(--ld-ink);
-+  font-size: 12px;
++.ld-set-more {
++  padding-top: 14px;
++  border-top: 1px solid var(--ld-line);
 +}
-+.ld-setting-switch {
++.ld-set-more > summary {
++  display: inline-flex;
++  align-items: center;
++  gap: 6px;
++  color: var(--ld-ink);
++  font-size: 13.5px;
++  font-weight: 600;
++  cursor: pointer;
++  list-style: none;
++}
++.ld-set-more > summary::-webkit-details-marker {
++  display: none;
++}
++.ld-set-more > summary::after {
++  content: '';
++  width: 6px;
++  height: 6px;
++  border: solid var(--ld-set-hint);
++  border-width: 0 1.5px 1.5px 0;
++  transform: rotate(-45deg);
++  transition: transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
++}
++.ld-set-more[open] > summary::after {
++  transform: rotate(45deg);
++}
++.ld-set-more > .ld-set-stack {
++  margin-top: 14px;
++}
++/* A checkbox drawn as a switch; it keeps its native checkbox role. */
++.ld-switch {
++  flex-shrink: 0;
++  width: 36px;
++  height: 20px;
++  margin: 0;
++  border-radius: 999px;
++  background: var(--ld-set-field-line)
++    radial-gradient(circle, #fff 0 7px, transparent 7.5px) no-repeat 0 50% /
++    20px 20px;
++  cursor: pointer;
++  appearance: none;
++  transition:
++    background-color 180ms ease-out,
++    background-position 180ms cubic-bezier(0.25, 1, 0.5, 1);
++}
++.ld-switch:checked {
++  background-color: var(--ld-accent);
++  background-position: 100% 50%;
++}
++.ld-switch:disabled {
++  cursor: not-allowed;
++  opacity: 0.5;
++}
++.ld-set-savebar {
++  position: sticky;
++  bottom: 16px;
++  z-index: 30;
 +  display: flex;
 +  align-items: center;
 +  gap: 10px;
++  padding: 10px 10px 10px 16px;
++  border: 1px solid var(--ld-line);
++  border-radius: 10px;
++  background: var(--ld-surface, #fff);
++  box-shadow: 0 8px 24px rgb(20 30 25 / 0.12);
++  animation: ld-set-rise 200ms cubic-bezier(0.25, 1, 0.5, 1);
 +}
-+.ld-setting-switch input {
-+  accent-color: var(--ld-accent);
++.ld-set-savebar[hidden] {
++  display: none;
 +}
-+.ld-key-setting {
-+  display: flex;
-+  align-items: end;
-+  gap: 12px;
-+  flex-wrap: wrap;
-+}
-+.ld-key-setting .ld-choice {
-+  flex: 1 1 260px;
-+}
-+.ld-key-setting .ld-choice input {
-+  width: 100%;
-+  max-width: none;
-+  min-width: 0;
-+}
-+.ld-settings > div:first-child {
++.ld-set-savebar > p {
 +  flex: 1;
++  margin: 0;
++  color: var(--ld-ink);
++  font-size: 13px;
++}
++.ld-set-savebar > p.ld-success {
++  color: var(--ld-accent);
++}
++.ld-set-savebar > p.ld-set-error {
++  color: var(--ld-set-error);
++}
++@keyframes ld-set-rise {
++  from {
++    opacity: 0;
++    transform: translateY(8px);
++  }
++}
++@media (prefers-reduced-motion: reduce) {
++  .ld-set-body,
++  .ld-set-savebar {
++    animation: none;
++  }
++  .ld-set-chevron,
++  .ld-set-more > summary::after,
++  .ld-switch {
++    transition: none;
++  }
++}
++@media (max-width: 520px) {
++  .ld-set-inline,
++  .ld-set-disclosure > summary {
++    padding-inline: 14px;
++  }
++  .ld-set-body {
++    padding-inline: 14px;
++  }
++  .ld-set-savebar {
++    flex-wrap: wrap;
++  }
++  .ld-set-savebar > p {
++    flex-basis: 100%;
++  }
 +}
 +.ld-icon-button {
 +  background: none;
@@ -2784,9 +3081,6 @@ index 9b0f176..1271aa3 100644
 +  }
 +  .ld-annotation-word {
 +    display: none;
-+  }
-+  .ld-settings {
-+    flex-wrap: wrap;
 +  }
 +}
 +@media (max-width: 760px) {
@@ -3681,9 +3975,6 @@ index 9b0f176..1271aa3 100644
 +.ld-theme-toggle {
 +  flex-shrink: 0;
 +}
-+.ld-settings-page .ld-appearance {
-+  margin-bottom: 24px;
-+}
 +.ld-app[data-color-scheme='dark'] .ld-content {
 +  max-width: 1248px;
 +  padding: 32px 36px;
@@ -4005,6 +4296,38 @@ index 9b0f176..1271aa3 100644
 +    margin-top: 4px;
 +    margin-left: 0;
 +  }
++}
++.ld-app[data-color-scheme='dark'] .ld-settings-page {
++  --ld-set-error: oklch(74% 0.14 28);
++  --ld-set-hover: color-mix(in oklab, var(--ld-ink) 5%, transparent);
++}
++.ld-app[data-color-scheme='dark'] .ld-set-group > h2 {
++  font-size: 14px;
++  font-weight: 500;
++}
++.ld-app[data-color-scheme='dark'] .ld-set-title {
++  font-size: 15px;
++}
++.ld-app[data-color-scheme='dark']
++  :is(.ld-set-field :is(input, select), .ld-set-select) {
++  background: var(--ld-bg);
++}
++.ld-app[data-color-scheme='dark'] .ld-switch {
++  background-image: radial-gradient(
++    circle,
++    var(--ld-ink) 0 7px,
++    transparent 7.5px
++  );
++}
++.ld-app[data-color-scheme='dark'] .ld-switch:checked {
++  background-image: radial-gradient(
++    circle,
++    var(--ld-on-accent) 0 7px,
++    transparent 7.5px
++  );
++}
++.ld-app[data-color-scheme='dark'] .ld-set-savebar {
++  box-shadow: 0 12px 32px rgb(0 0 0 / 0.45);
 +}
 diff --git a/src/types/config.ts b/src/types/config.ts
 index 5054e68..041e865 100644
@@ -6690,15 +7013,20 @@ index 0000000..6c5a620
 +}
 diff --git a/src/sidebar/components/LibrarySettings.tsx b/src/sidebar/components/LibrarySettings.tsx
 new file mode 100644
-index 0000000..0308164
+index 0000000..d240265
 --- /dev/null
 +++ b/src/sidebar/components/LibrarySettings.tsx
-@@ -0,0 +1,319 @@
+@@ -0,0 +1,496 @@
 +import type { ComponentChildren } from 'preact';
 +import { useEffect, useState } from 'preact/hooks';
 +
 +import type { LibraryColorScheme } from '../helpers/library-preferences';
 +import { researchRequest } from '../helpers/local-research';
++import {
++  SettingsDisclosure,
++  SettingsGroup,
++  SettingsInline,
++} from './SettingsSection';
 +import ZoteroSettings from './ZoteroSettings';
 +
 +type Preferences = {
@@ -6719,18 +7047,47 @@ index 0000000..0308164
 +  failed?: number;
 +};
 +type KeyName = 'OPENALEX_API_KEY' | 'S2_API_KEY';
-+const KEYS: { name: KeyName; label: string }[] = [
-+  { name: 'OPENALEX_API_KEY', label: 'OpenAlex API key' },
-+  { name: 'S2_API_KEY', label: 'Semantic Scholar API key' },
++const KEYS: { name: KeyName; label: string; short: string }[] = [
++  { name: 'OPENALEX_API_KEY', label: 'OpenAlex API key', short: 'OpenAlex' },
++  {
++    name: 'S2_API_KEY',
++    label: 'Semantic Scholar API key',
++    short: 'Semantic Scholar',
++  },
 +];
 +type Settings = {
 +  preferences: Preferences;
 +  api_keys: Record<KeyName, { configured: boolean; editable: boolean }>;
 +};
++/** Inputs outside the save bar join its form through the `form` attribute. */
++const FORM = 'ld-settings-form';
 +const running = (job?: MaintenanceJob | null) =>
 +  job?.state === 'queued' || job?.state === 'running';
 +const timestamp = (value?: string) =>
 +  value ? new Date(value).toLocaleString() : 'Not yet';
++const shortTimestamp = (value?: string) =>
++  value
++    ? new Date(value).toLocaleString(undefined, {
++        month: 'short',
++        day: 'numeric',
++        hour: 'numeric',
++        minute: '2-digit',
++      })
++    : 'never';
++const clockTime = (value: string) => {
++  const [hours, minutes] = value.split(':').map(Number);
++  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
++    return value;
++  }
++  const time = new Date();
++  time.setHours(hours, minutes, 0, 0);
++  return time.toLocaleTimeString(undefined, {
++    hour: 'numeric',
++    minute: '2-digit',
++  });
++};
++const samePreferences = (a: Preferences, b: Preferences) =>
++  (Object.keys(a) as (keyof Preferences)[]).every(key => a[key] === b[key]);
 +
 +export default function LibrarySettings({
 +  developerMode,
@@ -6742,6 +7099,7 @@ index 0000000..0308164
 +  onBackup,
 +  onEnrich,
 +  organization,
++  organizationSummary,
 +  onImported,
 +}: {
 +  developerMode: boolean;
@@ -6752,264 +7110,406 @@ index 0000000..0308164
 +  enrichment: MaintenanceJob | null;
 +  onBackup: () => void;
 +  onEnrich: () => void;
++  /** Controls for automatic organization, shown when its row is opened. */
 +  organization: ComponentChildren;
++  organizationSummary: string;
 +  onImported: () => void;
 +}) {
 +  const [saved, setSaved] = useState<Settings | null>(null);
 +  const [preferences, setPreferences] = useState<Preferences | null>(null);
 +  const [keys, setKeys] = useState<Partial<Record<KeyName, string | null>>>({});
 +  const [busy, setBusy] = useState(false);
-+  const [error, setError] = useState('');
++  const [loadError, setLoadError] = useState('');
++  const [saveError, setSaveError] = useState('');
 +  const [message, setMessage] = useState('');
 +  const load = async () => {
-+    setError('');
++    setLoadError('');
 +    try {
 +      const result = (await researchRequest('settings')) as Settings;
 +      setSaved(result);
 +      setPreferences(result.preferences);
 +    } catch (error) {
-+      setError(error.message);
++      setLoadError(error.message);
 +    }
 +  };
 +  useEffect(() => {
 +    void load();
 +  }, []);
++  useEffect(() => {
++    if (!message) {
++      return undefined;
++    }
++    const timer = setTimeout(() => setMessage(''), 4000);
++    return () => clearTimeout(timer);
++  }, [message]);
++
++  // Blank key fields keep existing values. Removed keys are sent as null.
++  const changedKeys = Object.fromEntries(
++    Object.entries(keys).filter(([, value]) => value !== ''),
++  );
++  const dirty =
++    !!saved &&
++    !!preferences &&
++    (!samePreferences(preferences, saved.preferences) ||
++      Object.keys(changedKeys).length > 0);
++
++  const update = (change: Partial<Preferences>) => {
++    setPreferences(current => current && { ...current, ...change });
++    setMessage('');
++    setSaveError('');
++  };
++  const updateKey = (name: KeyName, value: string | null) => {
++    setKeys(current => ({ ...current, [name]: value }));
++    setMessage('');
++    setSaveError('');
++  };
++  const discard = () => {
++    if (saved) {
++      setPreferences(saved.preferences);
++    }
++    setKeys({});
++    setSaveError('');
++  };
 +  const save = async (event: Event) => {
 +    event.preventDefault();
++    if (!dirty) {
++      return;
++    }
 +    setBusy(true);
-+    setError('');
++    setSaveError('');
 +    setMessage('');
 +    try {
-+      // Blank fields keep existing values. Removed keys are sent as null.
-+      const api_keys = Object.fromEntries(
-+        Object.entries(keys).filter(([, value]) => value !== ''),
-+      );
 +      const result = (await researchRequest('save-settings', {
-+        values: { preferences, api_keys },
++        values: { preferences, api_keys: changedKeys },
 +      })) as Settings;
 +      setSaved(result);
 +      setPreferences(result.preferences);
 +      setKeys({});
 +      setMessage('Settings saved.');
 +    } catch (error) {
-+      setError(error.message);
++      setSaveError(error.message);
 +    } finally {
 +      setBusy(false);
 +    }
 +  };
++
++  const loading = !saved || !preferences;
++  const pending = loadError ? 'Unavailable' : 'Loading…';
++  const loadingBody = loadError ? null : (
++    <p className="ld-hint" role="status">
++      Loading settings…
++    </p>
++  );
++
++  const backupSummary = loading
++    ? pending
++    : running(backup)
++      ? 'Backing up…'
++      : backup?.error
++        ? 'Last backup failed'
++        : `${
++            preferences.backup_enabled
++              ? `Daily at ${clockTime(preferences.backup_time)}`
++              : 'Manual'
++          } · last ${shortTimestamp(backup?.completed)}`;
++  const enrichmentSummary = loading
++    ? pending
++    : running(enrichment)
++      ? `Enriching ${enrichment?.done ?? 0}/${enrichment?.total ?? 0}…`
++      : `${preferences.enrichment_enabled ? 'Automatic' : 'Manual'} · last run ${shortTimestamp(enrichment?.completed)}`;
++  const configuredKeys = saved
++    ? KEYS.filter(({ name }) => saved.api_keys[name].configured)
++    : [];
++  const keysSummary = loading
++    ? pending
++    : configuredKeys.length === 0
++      ? 'None configured'
++      : configuredKeys.length === KEYS.length
++        ? 'All configured'
++        : `${configuredKeys.map(key => key.short).join(', ')} configured`;
++
 +  return (
 +    <div className="ld-settings-page">
-+      <section
-+        className="ld-panel ld-appearance"
-+        aria-label="Appearance settings"
-+      >
-+        <h2>Appearance</h2>
-+        <label className="ld-choice">
-+          <span>Color mode</span>
-+          <select
-+            aria-label="Color mode"
-+            value={colorScheme}
-+            onChange={event =>
-+              onColorSchemeChange(
-+                event.currentTarget.value as LibraryColorScheme,
-+              )
-+            }
-+          >
-+            <option value="system">System</option>
-+            <option value="light">Light</option>
-+            <option value="dark">Dark</option>
-+          </select>
-+        </label>
-+      </section>
-+      <section className="ld-panel" aria-label="Developer settings">
-+        <h2>Developer mode</h2>
-+        <label className="ld-setting-switch">
-+          <input
-+            type="checkbox"
-+            checked={developerMode}
-+            onChange={event =>
-+              onDeveloperModeChange(event.currentTarget.checked)
-+            }
-+          />
-+          Enable developer mode
-+        </label>
-+        <p className="ld-hint">
-+          Show experimental Wiki and Knowledge graph views in Research. This
-+          choice is saved automatically in this browser.
-+        </p>
-+      </section>
-+      {error && (
++      {loadError && (
 +        <div className="ld-notice" role="alert">
-+          {error}
++          {loadError}
 +          <button onClick={load}>Retry settings</button>
 +        </div>
 +      )}
-+      {message && (
-+        <p className="ld-success" role="status">
-+          {message}
-+        </p>
-+      )}
-+      {!preferences || !saved ? (
-+        <p role="status">Loading settings…</p>
-+      ) : (
-+        <form onSubmit={save}>
-+          <fieldset disabled={busy}>
-+            <section className="ld-panel" aria-label="Backup settings">
-+              <h2>Backup</h2>
-+              <label className="ld-setting-switch">
++
++      <SettingsGroup title="General">
++        <SettingsInline
++          title="Color mode"
++          control={() => (
++            <select
++              className="ld-set-select"
++              aria-label="Color mode"
++              value={colorScheme}
++              onChange={event =>
++                onColorSchemeChange(
++                  event.currentTarget.value as LibraryColorScheme,
++                )
++              }
++            >
++              <option value="system">System</option>
++              <option value="light">Light</option>
++              <option value="dark">Dark</option>
++            </select>
++          )}
++        />
++        <SettingsInline
++          title="Developer mode"
++          description="Experimental Wiki and Knowledge graph views in Research"
++          control={describedBy => (
++            <input
++              type="checkbox"
++              className="ld-switch"
++              aria-label="Enable developer mode"
++              aria-describedby={describedBy}
++              checked={developerMode}
++              onChange={event =>
++                onDeveloperModeChange(event.currentTarget.checked)
++              }
++            />
++          )}
++        />
++      </SettingsGroup>
++
++      <SettingsGroup title="Library">
++        <SettingsDisclosure
++          title="Backup"
++          summary={backupSummary}
++          tone={backup?.error ? 'error' : undefined}
++        >
++          {loading ? (
++            loadingBody
++          ) : (
++            <fieldset className="ld-set-stack" disabled={busy}>
++              <label className="ld-set-toggle">
++                <span>Back up automatically every day</span>
 +                <input
 +                  type="checkbox"
++                  className="ld-switch"
++                  form={FORM}
 +                  checked={preferences.backup_enabled}
 +                  onChange={event =>
-+                    setPreferences({
-+                      ...preferences,
-+                      backup_enabled: event.currentTarget.checked,
-+                    })
-+                  }
-+                />
-+                Back up automatically every day
-+              </label>
-+              <label className="ld-choice">
-+                <span>Daily backup time (local)</span>
-+                <input
-+                  type="time"
-+                  aria-label="Daily backup time"
-+                  value={preferences.backup_time}
-+                  required
-+                  onInput={event =>
-+                    setPreferences({
-+                      ...preferences,
-+                      backup_time: event.currentTarget.value,
-+                    })
++                    update({ backup_enabled: event.currentTarget.checked })
 +                  }
 +                />
 +              </label>
-+              <label className="ld-setting-switch">
++              {preferences.backup_enabled && (
++                <label className="ld-set-field">
++                  <span>Time (local)</span>
++                  <input
++                    type="time"
++                    aria-label="Daily backup time"
++                    form={FORM}
++                    value={preferences.backup_time}
++                    required
++                    onInput={event =>
++                      update({ backup_time: event.currentTarget.value })
++                    }
++                  />
++                </label>
++              )}
++              <label className="ld-set-toggle">
++                <span>
++                  Import public annotations only
++                  <small className="ld-hint">
++                    Private imports need a configured Hypothesis account.
++                  </small>
++                </span>
 +                <input
 +                  type="checkbox"
++                  className="ld-switch"
++                  form={FORM}
++                  aria-label="Import public annotations only"
 +                  checked={preferences.backup_public_only}
 +                  onChange={event =>
-+                    setPreferences({
-+                      ...preferences,
-+                      backup_public_only: event.currentTarget.checked,
-+                    })
++                    update({ backup_public_only: event.currentTarget.checked })
 +                  }
 +                />
-+                Import public annotations only
 +              </label>
++              {backup?.error && (
++                <p className="ld-set-error" role="alert">
++                  {backup.error}
++                </p>
++              )}
++              <div className="ld-set-actions">
++                <button
++                  className="ld-button"
++                  type="button"
++                  disabled={running(backup)}
++                  onClick={onBackup}
++                >
++                  {running(backup) ? 'Backing up…' : 'Back up now'}
++                </button>
++                <span className="ld-hint">
++                  Last successful backup: {timestamp(backup?.completed)}
++                  {backup?.local_snapshot_at && (
++                    <>
++                      {' '}
++                      · Local snapshot: {timestamp(backup.local_snapshot_at)}
++                    </>
++                  )}
++                </span>
++              </div>
++            </fieldset>
++          )}
++        </SettingsDisclosure>
++        <SettingsDisclosure
++          title="Automatic organization"
++          summary={organizationSummary}
++        >
++          <div className="ld-set-stack">{organization}</div>
++        </SettingsDisclosure>
++      </SettingsGroup>
++
++      <SettingsGroup title="Integrations">
++        <ZoteroSettings onImported={onImported} />
++        <SettingsDisclosure
++          title="Research enrichment"
++          summary={enrichmentSummary}
++        >
++          {loading ? (
++            loadingBody
++          ) : (
++            <fieldset className="ld-set-stack" disabled={busy}>
 +              <p className="ld-hint">
-+                Private imports require a configured Hypothesis account.
++                Matches saved pages to papers in OpenAlex and Semantic Scholar.
++                Automatic runs need an API key.
 +              </p>
-+              <p className="ld-hint">
-+                Last successful backup: {timestamp(backup?.completed)}
-+                {backup?.local_snapshot_at && (
-+                  <> · Local snapshot: {timestamp(backup.local_snapshot_at)}</>
-+                )}
-+              </p>
-+              {backup?.error && <p role="alert">{backup.error}</p>}
-+              <button
-+                className="ld-button ld-primary"
-+                type="button"
-+                disabled={running(backup)}
-+                onClick={onBackup}
-+              >
-+                {running(backup) ? 'Backing up…' : 'Back up now'}
-+              </button>
-+            </section>
-+            <section className="ld-panel" aria-label="Enrichment settings">
-+              <h2>Research enrichment</h2>
-+              <label className="ld-setting-switch">
++              <label className="ld-set-toggle">
++                <span>Enrich research automatically</span>
 +                <input
 +                  type="checkbox"
++                  className="ld-switch"
++                  form={FORM}
 +                  checked={preferences.enrichment_enabled}
 +                  onChange={event =>
-+                    setPreferences({
-+                      ...preferences,
-+                      enrichment_enabled: event.currentTarget.checked,
-+                    })
++                    update({ enrichment_enabled: event.currentTarget.checked })
 +                  }
 +                />
-+                Enrich research automatically
 +              </label>
++              <div className="ld-set-actions">
++                <button
++                  className="ld-button"
++                  type="button"
++                  disabled={running(enrichment)}
++                  onClick={onEnrich}
++                >
++                  {running(enrichment)
++                    ? `Enriching ${enrichment?.done ?? 0}/${enrichment?.total ?? 0}…`
++                    : 'Enrich research'}
++                </button>
++                <span className="ld-hint">
++                  Last run: {timestamp(enrichment?.completed)}
++                  {enrichment?.skipped !== undefined && (
++                    <> · {enrichment.skipped} cached pages skipped</>
++                  )}
++                </span>
++              </div>
++            </fieldset>
++          )}
++        </SettingsDisclosure>
++        <SettingsDisclosure title="API keys" summary={keysSummary}>
++          {loading ? (
++            loadingBody
++          ) : (
++            <fieldset className="ld-set-stack" disabled={busy}>
 +              <p className="ld-hint">
-+                Automatic enrichment requires an API key below.
++                Used for enrichment and recommendations. Saved keys are never
++                shown; leave a field blank to keep its key.
 +              </p>
-+              <p className="ld-hint">
-+                Last run: {timestamp(enrichment?.completed)}
-+                {enrichment?.skipped !== undefined && (
-+                  <> · {enrichment.skipped} cached pages skipped</>
-+                )}
-+              </p>
-+              <button
-+                className="ld-button"
-+                type="button"
-+                disabled={running(enrichment)}
-+                onClick={onEnrich}
-+              >
-+                {running(enrichment)
-+                  ? `Enriching ${enrichment?.done ?? 0}/${enrichment?.total ?? 0}…`
-+                  : 'Enrich research'}
-+              </button>
-+            </section>
-+            <section className="ld-panel" aria-label="API keys">
-+              <h2>API keys</h2>
-+              <p>Leave a field blank to keep its saved key.</p>
-+              {KEYS.map(({ name, label }) => (
-+                <div className="ld-key-setting" key={name}>
-+                  <label className="ld-choice">
-+                    <span>{label}</span>
-+                    <input
-+                      type="password"
-+                      aria-label={label}
-+                      autoComplete="off"
-+                      spellcheck={false}
-+                      disabled={!saved.api_keys[name].editable}
-+                      value={keys[name] ?? ''}
-+                      onInput={event =>
-+                        setKeys({ ...keys, [name]: event.currentTarget.value })
-+                      }
-+                      placeholder={
-+                        saved.api_keys[name].configured
-+                          ? 'Configured · enter a replacement'
-+                          : 'Enter API key'
-+                      }
-+                    />
-+                  </label>
-+                  <span className="ld-hint">
-+                    {!saved.api_keys[name].editable
-+                      ? 'Managed by the service environment'
-+                      : keys[name] === null
-+                        ? 'Will be removed when saved'
-+                        : saved.api_keys[name].configured
-+                          ? 'Configured'
-+                          : 'Not configured'}
-+                  </span>
-+                  {saved.api_keys[name].configured &&
-+                    saved.api_keys[name].editable && (
++              {KEYS.map(({ name, label }) => {
++                const status = saved.api_keys[name];
++                return (
++                  <div className="ld-set-key" key={name}>
++                    <label className="ld-set-field">
++                      <span>{label}</span>
++                      <input
++                        type="password"
++                        aria-label={label}
++                        form={FORM}
++                        autoComplete="off"
++                        spellcheck={false}
++                        disabled={!status.editable}
++                        value={keys[name] ?? ''}
++                        onInput={event =>
++                          updateKey(name, event.currentTarget.value)
++                        }
++                        placeholder={
++                          status.configured
++                            ? 'Configured · enter a replacement'
++                            : 'Enter API key'
++                        }
++                      />
++                    </label>
++                    <span className="ld-hint">
++                      {!status.editable
++                        ? 'Managed by the service environment'
++                        : keys[name] === null
++                          ? 'Will be removed when saved'
++                          : status.configured
++                            ? 'Configured'
++                            : 'Not configured'}
++                    </span>
++                    {status.configured && status.editable && (
 +                      <button
 +                        type="button"
-+                        className="ld-button"
++                        className="ld-set-link"
 +                        onClick={() =>
-+                          setKeys({
-+                            ...keys,
-+                            [name]: keys[name] === null ? '' : null,
-+                          })
++                          updateKey(name, keys[name] === null ? '' : null)
 +                        }
 +                      >
 +                        {keys[name] === null ? 'Keep key' : 'Remove key'}
 +                      </button>
 +                    )}
-+                </div>
-+              ))}
-+            </section>
-+            <button type="submit" className="ld-button ld-primary">
++                  </div>
++                );
++              })}
++            </fieldset>
++          )}
++        </SettingsDisclosure>
++      </SettingsGroup>
++
++      <form
++        id={FORM}
++        className="ld-set-savebar"
++        onSubmit={save}
++        hidden={!dirty && !message}
++      >
++        {dirty ? (
++          <>
++            {saveError ? (
++              <p className="ld-set-error" role="alert">
++                {saveError}
++              </p>
++            ) : (
++              <p>Unsaved changes</p>
++            )}
++            <button
++              type="button"
++              className="ld-button"
++              disabled={busy}
++              onClick={discard}
++            >
++              Discard
++            </button>
++            <button
++              type="submit"
++              className="ld-button ld-primary"
++              disabled={busy}
++            >
 +              {busy ? 'Saving…' : 'Save settings'}
 +            </button>
-+          </fieldset>
-+        </form>
-+      )}
-+      <ZoteroSettings onImported={onImported} />
-+      {organization}
++          </>
++        ) : (
++          <p className="ld-success" role="status">
++            {message}
++          </p>
++        )}
++      </form>
 +    </div>
 +  );
 +}
@@ -7237,10 +7737,10 @@ index 0000000..53db738
 +}
 diff --git a/src/sidebar/components/LocalLibraryView.tsx b/src/sidebar/components/LocalLibraryView.tsx
 new file mode 100644
-index 0000000..4d1cb2a
+index 0000000..6a878d6
 --- /dev/null
 +++ b/src/sidebar/components/LocalLibraryView.tsx
-@@ -0,0 +1,1254 @@
+@@ -0,0 +1,1259 @@
 +import { confirm, Card, CardContent } from '@hypothesis/frontend-shared';
 +import {
 +  useCallback,
@@ -7412,6 +7912,10 @@ index 0000000..4d1cb2a
 +    </svg>
 +  );
 +}
++const PROVIDERS = [
++  { value: 'local', label: 'Local taxonomy · offline' },
++  { value: 'codex', label: 'GPT-6 Luna · Codex' },
++];
 +function Choice({
 +  label,
 +  value,
@@ -8032,31 +8536,32 @@ index 0000000..4d1cb2a
 +                void refreshResearchDocuments();
 +                void refresh(true);
 +              }}
++              organizationSummary={
++                PROVIDERS.find(option => option.value === provider)?.label ??
++                provider
++              }
 +              organization={
-+                <section
-+                  className="ld-panel ld-settings"
-+                  aria-label="Library settings"
-+                >
-+                  <div>
-+                    <h2>Automatic organization</h2>
-+                  </div>
++                <>
++                  <p className="ld-hint">
++                    Groups pages by link type, topic and subtopic. Manual
++                    corrections are kept.
++                  </p>
 +                  <Choice
 +                    label="Categorize with"
 +                    value={provider}
-+                    options={[
-+                      { value: 'local', label: 'Local taxonomy · offline' },
-+                      { value: 'codex', label: 'GPT-6 Luna · Codex' },
-+                    ]}
++                    options={PROVIDERS}
 +                    onChange={setProvider}
 +                  />
-+                  <button
-+                    className="ld-button"
-+                    disabled={working || busy}
-+                    onClick={organize}
-+                  >
-+                    Organize library
-+                  </button>
-+                </section>
++                  <div className="ld-set-actions">
++                    <button
++                      className="ld-button"
++                      disabled={working || busy}
++                      onClick={organize}
++                    >
++                      Organize library
++                    </button>
++                  </div>
++                </>
 +              }
 +            />
 +          )}
@@ -11308,6 +11813,104 @@ index 0000000..9057092
 +    </div>
 +  );
 +}
+diff --git a/src/sidebar/components/SettingsSection.tsx b/src/sidebar/components/SettingsSection.tsx
+new file mode 100644
+index 0000000..d6810e3
+--- /dev/null
++++ b/src/sidebar/components/SettingsSection.tsx
+@@ -0,0 +1,92 @@
++import type { ComponentChildren } from 'preact';
++import { useId } from 'preact/hooks';
++
++/** A titled group of settings rows. */
++export function SettingsGroup({
++  title,
++  children,
++}: {
++  title: string;
++  children: ComponentChildren;
++}) {
++  const id = useId();
++  return (
++    <section className="ld-set-group" aria-labelledby={id}>
++      <h2 id={id}>{title}</h2>
++      <div className="ld-set-list">{children}</div>
++    </section>
++  );
++}
++
++/**
++ * A setting changed in place, such as a switch or select. Clicking the title
++ * focuses or toggles the control.
++ */
++export function SettingsInline({
++  title,
++  description,
++  control,
++}: {
++  title: string;
++  description?: string;
++  control: (describedBy: string | undefined) => ComponentChildren;
++}) {
++  const id = useId();
++  return (
++    <label className="ld-set-row ld-set-inline">
++      <span className="ld-set-text">
++        <span className="ld-set-title">{title}</span>
++        {description && (
++          <span className="ld-set-summary" id={id}>
++            {description}
++          </span>
++        )}
++      </span>
++      {control(description ? id : undefined)}
++    </label>
++  );
++}
++
++/**
++ * A setting whose current state is shown in one line and whose options open
++ * in place. Native details/summary keeps keyboard and screen-reader support.
++ */
++export function SettingsDisclosure({
++  title,
++  summary,
++  tone,
++  children,
++}: {
++  title: string;
++  summary: string;
++  tone?: 'error';
++  children: ComponentChildren;
++}) {
++  return (
++    <details className="ld-set-row ld-set-disclosure">
++      <summary>
++        <span className="ld-set-text">
++          <span className="ld-set-title">{title}</span>
++          <span className="ld-set-summary" data-tone={tone}>
++            {summary}
++          </span>
++        </span>
++        <svg
++          className="ld-set-chevron"
++          width="16"
++          height="16"
++          viewBox="0 0 24 24"
++          fill="none"
++          stroke="currentColor"
++          strokeWidth="1.8"
++          strokeLinecap="round"
++          strokeLinejoin="round"
++          aria-hidden="true"
++        >
++          <path d="M9 6l6 6-6 6" />
++        </svg>
++      </summary>
++      <div className="ld-set-body">{children}</div>
++    </details>
++  );
++}
 diff --git a/src/sidebar/components/SidenoteLogo.tsx b/src/sidebar/components/SidenoteLogo.tsx
 new file mode 100644
 index 0000000..1fce638
@@ -11329,10 +11932,10 @@ index 0000000..1fce638
 +}
 diff --git a/src/sidebar/components/ZoteroOnlineSettings.tsx b/src/sidebar/components/ZoteroOnlineSettings.tsx
 new file mode 100644
-index 0000000..2f70ed6
+index 0000000..3698d90
 --- /dev/null
 +++ b/src/sidebar/components/ZoteroOnlineSettings.tsx
-@@ -0,0 +1,220 @@
+@@ -0,0 +1,269 @@
 +import { useEffect, useState } from 'preact/hooks';
 +
 +import { researchRequest } from '../helpers/local-research';
@@ -11343,9 +11946,18 @@ index 0000000..2f70ed6
 +  connection: Connection;
 +  api_key: { configured: boolean; editable: boolean };
 +};
++export type ZoteroOnlineStatus = { summary: string; tone?: 'error' };
++
++const OUTDATED_BACKEND =
++  'The running local backend predates Zotero support. Restart it from this sidenote checkout, then retry.';
++
++/** Older bridges answer unknown Zotero routes with a generic 404. */
++const explain = (message: string) =>
++  message === 'Route not found' ? OUTDATED_BACKEND : message;
 +
 +export default function ZoteroOnlineSettings({
 +  onImported,
++  onStatus,
 +}: {
 +  onImported: (result: {
 +    references: number;
@@ -11353,6 +11965,8 @@ index 0000000..2f70ed6
 +    updated: number;
 +    unchanged: number;
 +  }) => void;
++  /** Reports a one-line connection state for the collapsed settings row. */
++  onStatus?: (status: ZoteroOnlineStatus) => void;
 +}) {
 +  const [saved, setSaved] = useState<Settings | null>(null);
 +  const [connection, setConnection] = useState<Connection>({
@@ -11367,24 +11981,50 @@ index 0000000..2f70ed6
 +    saved &&
 +    (JSON.stringify(connection) !== JSON.stringify(saved.connection) ||
 +      apiKey !== '');
++  const connected =
++    !!saved && saved.api_key.configured && !!saved.connection.library_id;
 +  const load = async () => {
 +    try {
 +      const result = (await researchRequest('zotero-connection')) as Settings;
 +      if (!result.connection || !result.api_key) {
-+        throw new Error(
-+          'Restart the local backend to enable Zotero online settings.',
-+        );
++        throw new Error(OUTDATED_BACKEND);
 +      }
 +      setSaved(result);
 +      setConnection(result.connection);
 +      setError('');
 +    } catch (error) {
-+      setError(error.message);
++      setError(explain(error.message));
 +    }
 +  };
 +  useEffect(() => {
 +    void load();
 +  }, []);
++  useEffect(() => {
++    if (!onStatus) {
++      return;
++    }
++    if (!saved) {
++      onStatus(
++        error
++          ? {
++              summary:
++                error === OUTDATED_BACKEND
++                  ? 'Backend restart needed'
++                  : 'Unavailable',
++              tone: 'error',
++            }
++          : { summary: 'Checking connection…' },
++      );
++      return;
++    }
++    const library =
++      saved.connection.library_type === 'groups' ? 'Group' : 'Personal';
++    onStatus({
++      summary: connected
++        ? `${library} library ${saved.connection.library_id} · online`
++        : 'Not connected',
++    });
++  }, [saved, error, connected, onStatus]);
 +  const save = async (event: Event) => {
 +    event.preventDefault();
 +    setBusy(true);
@@ -11401,10 +12041,10 @@ index 0000000..2f70ed6
 +      setConnection(result.connection);
 +      setApiKey('');
 +      setMessage(
-+        'Connection settings saved. Choose Import from Zotero online to read your library.',
++        'Connection saved. Choose Import from Zotero online to read your library.',
 +      );
 +    } catch (error) {
-+      setError(error.message);
++      setError(explain(error.message));
 +    } finally {
 +      setBusy(false);
 +    }
@@ -11423,17 +12063,17 @@ index 0000000..2f70ed6
 +        `${result.references} online references processed. Import again to refresh.`,
 +      );
 +    } catch (error) {
-+      setError(error.message);
++      setError(explain(error.message));
 +    } finally {
 +      setBusy(false);
 +    }
 +  };
 +  return (
-+    <section aria-label="Zotero online connection">
-+      <h3>Connect your online library</h3>
++    <section className="ld-set-sub" aria-label="Zotero online connection">
++      <h3>Online library</h3>
 +      <p className="ld-hint">
-+        Read your synced personal or group library while Zotero desktop is
-+        closed. Create a dedicated key with library and note read access in{' '}
++        Reads your synced personal or group library, even with Zotero closed.
++        Create a read-only key in{' '}
 +        <a
 +          href="https://www.zotero.org/settings/keys"
 +          target="_blank"
@@ -11441,15 +12081,15 @@ index 0000000..2f70ed6
 +        >
 +          Zotero API key settings
 +        </a>
-+        , where you can also find your numeric user ID. Enter the key here; it
-+        is stored locally and used only with Zotero’s official API.
++        , which also shows your numeric user ID. The key stays on this computer
++        and is sent only to Zotero’s API.
 +      </p>
 +      {saved && (
-+        <>
-+          <form onSubmit={save}>
-+            <fieldset disabled={busy}>
-+              <label className="ld-choice">
-+                <span>Zotero library</span>
++        <form className="ld-set-stack" onSubmit={save}>
++          <fieldset className="ld-set-stack" disabled={busy}>
++            <div className="ld-set-pair">
++              <label className="ld-set-field">
++                <span>Library</span>
 +                <select
 +                  aria-label="Zotero library type"
 +                  value={connection.library_type}
@@ -11464,13 +12104,18 @@ index 0000000..2f70ed6
 +                  <option value="groups">Group library</option>
 +                </select>
 +              </label>
-+              <label className="ld-choice">
-+                <span>Numeric user or group ID</span>
++              <label className="ld-set-field">
++                <span>
++                  {connection.library_type === 'groups'
++                    ? 'Group ID'
++                    : 'User ID'}
++                </span>
 +                <input
 +                  aria-label="Zotero library ID"
 +                  inputMode="numeric"
 +                  pattern="[1-9][0-9]*"
 +                  required
++                  placeholder="e.g. 1234567"
 +                  value={connection.library_id}
 +                  onInput={event =>
 +                    setConnection({
@@ -11480,8 +12125,10 @@ index 0000000..2f70ed6
 +                  }
 +                />
 +              </label>
-+              <label className="ld-choice">
-+                <span>Zotero API key</span>
++            </div>
++            <div className="ld-set-key">
++              <label className="ld-set-field">
++                <span>API key</span>
 +                <input
 +                  type="password"
 +                  aria-label="Zotero API key"
@@ -11497,73 +12144,80 @@ index 0000000..2f70ed6
 +                  onInput={event => setApiKey(event.currentTarget.value)}
 +                />
 +              </label>
-+              <p className="ld-hint">
++              <span className="ld-hint">
 +                {!saved.api_key.editable
-+                  ? 'Key managed by service environment.'
++                  ? 'Key managed by the service environment.'
 +                  : apiKey === null
 +                    ? 'Key will be removed when saved.'
 +                    : saved.api_key.configured
 +                      ? 'API key configured.'
 +                      : 'No API key saved.'}
-+              </p>
++              </span>
 +              {saved.api_key.configured && saved.api_key.editable && (
 +                <button
-+                  className="ld-button"
++                  className="ld-set-link"
 +                  type="button"
 +                  onClick={() => setApiKey(apiKey === null ? '' : null)}
 +                >
 +                  {apiKey === null ? 'Keep Zotero key' : 'Remove Zotero key'}
 +                </button>
 +              )}
-+              <button className="ld-button" type="submit">
++            </div>
++            <div className="ld-set-actions">
++              <button
++                className={`ld-button${unsaved || !connected ? ' ld-primary' : ''}`}
++                type="submit"
++              >
 +                Save Zotero connection
 +              </button>
-+            </fieldset>
-+          </form>
-+          <button
-+            className="ld-button"
-+            disabled={
-+              busy ||
-+              !!unsaved ||
-+              !saved.api_key.configured ||
-+              !saved.connection.library_id
-+            }
-+            onClick={importOnline}
-+          >
-+            Import from Zotero online
-+          </button>
-+        </>
++              <button
++                className={`ld-button${connected && !unsaved ? ' ld-primary' : ''}`}
++                type="button"
++                disabled={busy || !!unsaved || !connected}
++                onClick={importOnline}
++              >
++                Import from Zotero online
++              </button>
++            </div>
++          </fieldset>
++        </form>
 +      )}
-+      {busy && <p role="status">Connecting to Zotero…</p>}
++      {busy && (
++        <p className="ld-hint" role="status">
++          Connecting to Zotero…
++        </p>
++      )}
 +      {message && (
 +        <p className="ld-success" role="status">
 +          {message}
 +        </p>
 +      )}
 +      {error && (
-+        <p role="alert">
-+          {error}
++        <div className="ld-set-error" role="alert">
++          <p>{error}</p>
 +          {!saved && (
-+            <button className="ld-button" onClick={load}>
++            <button className="ld-set-link" onClick={load}>
 +              Retry Zotero settings
 +            </button>
 +          )}
-+        </p>
++        </div>
 +      )}
 +    </section>
 +  );
 +}
 diff --git a/src/sidebar/components/ZoteroSettings.tsx b/src/sidebar/components/ZoteroSettings.tsx
 new file mode 100644
-index 0000000..d4dabf5
+index 0000000..290689c
 --- /dev/null
 +++ b/src/sidebar/components/ZoteroSettings.tsx
-@@ -0,0 +1,155 @@
+@@ -0,0 +1,192 @@
 +import { useState } from 'preact/hooks';
 +
 +import { researchRequest } from '../helpers/local-research';
 +import { importZoteroLibrary } from '../helpers/zotero';
++import { SettingsDisclosure } from './SettingsSection';
 +import ZoteroOnlineSettings from './ZoteroOnlineSettings';
++import type { ZoteroOnlineStatus } from './ZoteroOnlineSettings';
 +
 +type ImportResult = {
 +  created: number;
@@ -11583,6 +12237,9 @@ index 0000000..d4dabf5
 +  const [busy, setBusy] = useState(false);
 +  const [error, setError] = useState('');
 +  const [message, setMessage] = useState('');
++  const [status, setStatus] = useState<ZoteroOnlineStatus>({
++    summary: 'Checking connection…',
++  });
 +  const run = async (operation: () => Promise<void>) => {
 +    setBusy(true);
 +    setError('');
@@ -11643,74 +12300,106 @@ index 0000000..d4dabf5
 +      );
 +    });
 +  return (
-+    <section className="ld-panel" aria-label="Zotero integration">
-+      <h2>Zotero</h2>
-+      <p>
-+        Exchange references with Zotero. Repeat imports keep your local titles,
-+        corrections, reactions and personal notes.
-+      </p>
-+      <ZoteroOnlineSettings onImported={imported} />
-+      <fieldset disabled={busy}>
-+        <h3>Import from Zotero</h3>
++    <section aria-label="Zotero integration">
++      <SettingsDisclosure
++        title="Zotero"
++        summary={status.summary}
++        tone={status.tone}
++      >
 +        <p className="ld-hint">
-+          In Zotero, export your library or selected items as RIS with Export
-+          notes enabled, or as CSL JSON for references only. Files stay local.
++          Imports references, tags and notes into your local library. Zotero is
++          never modified, and repeat imports keep your local edits.
 +        </p>
-+        <label className="ld-choice">
-+          <span>Reference file</span>
-+          <input
-+            type="file"
-+            accept=".ris,.json"
-+            aria-label="Zotero reference file"
-+            onChange={event => setFile(event.currentTarget.files?.[0] ?? null)}
-+          />
-+        </label>
-+        <button className="ld-button" disabled={!file} onClick={importFile}>
-+          Import reference file
-+        </button>
-+        <p className="ld-hint">
-+          Or open Zotero, enable Settings → Advanced → Allow other applications
-+          on this computer to communicate with Zotero, then import your personal
-+          desktop library. This reads references, tags and child notes,
-+          including PDF annotation text. Attachment files and collection folders
-+          are not copied.
-+        </p>
-+        <button className="ld-button" onClick={importDesktop}>
-+          Import from Zotero desktop
-+        </button>
-+        <h3>Export to Zotero</h3>
-+        <label className="ld-choice">
-+          <span>Export format</span>
-+          <select
-+            aria-label="Reference export format"
-+            value={format}
-+            onChange={event => setFormat(event.currentTarget.value)}
-+          >
-+            <option value="ris">RIS · references and optional notes</option>
-+            <option value="csl-json">CSL JSON · references only</option>
-+          </select>
-+        </label>
-+        {format === 'ris' && (
-+          <label className="ld-setting-switch">
-+            <input
-+              type="checkbox"
-+              checked={includeNotes}
-+              onChange={event => setIncludeNotes(event.currentTarget.checked)}
-+            />
-+            Include highlights, comments and personal notes
-+          </label>
++        <ZoteroOnlineSettings onImported={imported} onStatus={setStatus} />
++        <fieldset className="ld-set-stack" disabled={busy}>
++          <section className="ld-set-sub" aria-label="Zotero desktop">
++            <h3>Desktop app</h3>
++            <p className="ld-hint">
++              No key needed. In Zotero, enable Settings → Advanced → Allow other
++              applications on this computer to communicate with Zotero. Reads
++              your personal library, including PDF annotation text; attachment
++              files and collections are not copied.
++            </p>
++            <div className="ld-set-actions">
++              <button className="ld-button" onClick={importDesktop}>
++                Import from Zotero desktop
++              </button>
++            </div>
++          </section>
++          <details className="ld-set-more">
++            <summary>Import or export a file</summary>
++            <div className="ld-set-stack">
++              <p className="ld-hint">
++                Export from Zotero as RIS with Export notes enabled, or as CSL
++                JSON for references only. Files stay local.
++              </p>
++              <div className="ld-set-actions">
++                <input
++                  type="file"
++                  accept=".ris,.json"
++                  aria-label="Zotero reference file"
++                  onChange={event =>
++                    setFile(event.currentTarget.files?.[0] ?? null)
++                  }
++                />
++                <button
++                  className="ld-button"
++                  disabled={!file}
++                  onClick={importFile}
++                >
++                  Import reference file
++                </button>
++              </div>
++              <label className="ld-set-field">
++                <span>Export format</span>
++                <select
++                  aria-label="Reference export format"
++                  value={format}
++                  onChange={event => setFormat(event.currentTarget.value)}
++                >
++                  <option value="ris">
++                    RIS · references and optional notes
++                  </option>
++                  <option value="csl-json">CSL JSON · references only</option>
++                </select>
++              </label>
++              {format === 'ris' && (
++                <label className="ld-set-toggle">
++                  <span>Include highlights, comments and personal notes</span>
++                  <input
++                    type="checkbox"
++                    className="ld-switch"
++                    checked={includeNotes}
++                    onChange={event =>
++                      setIncludeNotes(event.currentTarget.checked)
++                    }
++                  />
++                </label>
++              )}
++              <div className="ld-set-actions">
++                <button className="ld-button" onClick={exportFile}>
++                  Export library for Zotero
++                </button>
++              </div>
++            </div>
++          </details>
++        </fieldset>
++        {busy && (
++          <p className="ld-hint" role="status">
++            Processing references…
++          </p>
 +        )}
-+        <button className="ld-button" onClick={exportFile}>
-+          Export library for Zotero
-+        </button>
-+      </fieldset>
-+      {busy && <p role="status">Processing references…</p>}
-+      {message && (
-+        <p className="ld-success" role="status">
-+          {message}
-+        </p>
-+      )}
-+      {error && <p role="alert">{error}</p>}
++        {message && (
++          <p className="ld-success" role="status">
++            {message}
++          </p>
++        )}
++        {error && (
++          <p className="ld-set-error" role="alert">
++            {error}
++          </p>
++        )}
++      </SettingsDisclosure>
 +    </section>
 +  );
 +}

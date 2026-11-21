@@ -3,7 +3,7 @@
 Start with [AGENTS.md](AGENTS.md), [setup](docs/SETUP.md), and
 [development](docs/DEVELOPMENT.md). Keep changes focused, describe the user-visible
 behavior, and include the checks you actually ran. The project currently targets
-a local research workflow; the [roadmap](README.md#future-plan-from-research-workspace-to-everyday-reading)
+a local research workflow; the [roadmap](README.md#roadmap)
 describes the broader audience we hope to support.
 
 Use temporary synthetic vaults for tests. Keep personal data, annotation exports,

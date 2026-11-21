@@ -2,7 +2,7 @@
 
 Original project code is offered under [BSD-2-Clause](LICENSE). This does not
 relicense upstream code, fonts, downloaded models, API data, or source articles.
-The README's [acknowledgements](README.md#borrowed-foundations-and-acknowledgements)
+The README's [acknowledgements](README.md#acknowledgements)
 identify the main repositories and design/workflow influences.
 
 The sidenote source was copied from the Productivity project without its Git

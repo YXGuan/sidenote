@@ -110,7 +110,7 @@ command. Its service/schedule labels are derived from that vault's path.
 
 The new library may be empty. Compact is the only layout. The library, dashboard
 and collection tabs all share filters.
-Choose Light, Dark, or System in **Settings → Appearance**; the header also has
+Choose Light, Dark, or System in **Settings → Color mode**; the header also has
 a quick color-mode toggle. Dark mode follows the Console design.
 See [the feature guide](../hypothesis/DASHBOARD.md).
 
@@ -157,8 +157,9 @@ setting. Local page metadata, reactions and collections remain in your vault.
 
 ### Automatic daily backup
 
-Open the library's **Settings** tab, enable **Back up automatically every day**,
-choose a local time and import scope, then **Save settings**. Public-only imports
+Open the library's **Settings** tab, open **Backup**, enable **Back up automatically
+every day**, choose a local time and import scope, then **Save settings** in the bar
+that appears. Public-only imports
 need no token; authenticated imports use the verified account configured above.
 Automatic backup is off until enabled. **Back up now** also lives in Settings.
 

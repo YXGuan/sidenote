@@ -363,8 +363,27 @@ try {
   const openalexKey = page.getByLabel('OpenAlex API key', { exact: true });
   const saveSettings = page.getByRole('button', { name: 'Save settings', exact: true });
   const mode = page.getByRole('combobox', { name: 'Color mode', exact: true });
+  // Settings rows show their state collapsed; options open in place.
+  const settingRow = title =>
+    page.locator('details.ld-set-disclosure').filter({
+      has: page.locator(':scope > summary .ld-set-title', { hasText: new RegExp(`^${title}$`) }),
+    });
+  const openSetting = async title => {
+    const row = settingRow(title);
+    if ((await row.getAttribute('open')) === null) {
+      await row.locator(':scope > summary').click();
+    }
+    await row.locator(':scope > .ld-set-body').waitFor();
+  };
+  await mode.waitFor();
+  assert.equal(await autoBackup.isVisible(), false);
+  assert.equal(await page.getByRole('button', { name: 'Save settings', exact: true }).isVisible(), false);
   await page.getByRole('region', { name: 'Zotero integration', exact: true }).waitFor();
+  await settingRow('Zotero').locator('.ld-set-summary', { hasText: 'Not connected' }).waitFor();
+  assert.equal(await page.getByLabel('Zotero API key', { exact: true }).isVisible(), false);
+  await openSetting('Zotero');
   await page.getByLabel('Zotero API key', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Export library for Zotero', exact: true }).isVisible(), false);
   assert.equal(await page.getByLabel('Zotero API key', { exact: true }).inputValue(), '');
   assert.equal(await page.getByRole('button', { name: 'Import from Zotero online', exact: true }).isDisabled(), true);
   assert.equal(await page.getByRole('button', { name: 'Import from Zotero desktop', exact: true }).isEnabled(), true);
@@ -427,6 +446,9 @@ try {
   await page.getByRole('button', { name: 'Close page details', exact: true }).click();
   await page.getByRole('tab', { name: 'Settings', exact: true }).click();
   await route('#/settings');
+  for (const title of ['Backup', 'Research enrichment', 'API keys']) {
+    await openSetting(title);
+  }
   await autoBackup.waitFor();
   assert.equal(await autoBackup.isChecked(), false);
   assert.equal(await openalexKey.getAttribute('type'), 'password');
@@ -438,8 +460,13 @@ try {
   await page.getByRole('status').filter({ hasText: 'Settings saved.' }).waitFor();
   assert.equal(await openalexKey.inputValue(), '');
   assert.equal(await page.evaluate(() => JSON.stringify(sessionStorage).includes('synthetic-preview-api-key')), false);
+  assert.equal(await saveSettings.isVisible(), false);
   await page.reload();
   await route('#/settings');
+  await settingRow('Backup').locator('.ld-set-summary', { hasText: /^Daily at / }).waitFor();
+  for (const title of ['Backup', 'Research enrichment', 'API keys']) {
+    await openSetting(title);
+  }
   await autoBackup.waitFor();
   assert.equal(await autoBackup.isChecked(), true);
   assert.equal(await autoEnrich.isChecked(), false);

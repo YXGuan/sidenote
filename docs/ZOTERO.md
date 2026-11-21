@@ -7,13 +7,16 @@ Both save references and notes to your local vault. Imports do not modify Zotero
 
 ## Connect the online library
 
-1. Open [Zotero API key settings](https://www.zotero.org/settings/keys). Create a
-   dedicated key with read access to your library and notes; write access is not
-   needed. Note the numeric user ID shown there. For a group library, use its
-   numeric group ID and grant the key access to that group.
-2. Under **Settings → Zotero → Online library**, choose Personal or
-   Group, enter that ID and API key, then **Save Zotero connection**. Enter the key
-   directly in the local form or hidden CLI prompt; do not put it in chat.
+1. [Create a new Zotero API key](https://www.zotero.org/settings/keys/new). Give
+   it read access to your library and notes; write access is not needed. For a
+   group library, also grant the key access to that group and note the group's
+   numeric ID.
+2. Under **Settings → Zotero → Online library**, choose Personal or Group, paste
+   the API key, then **Save Zotero connection**. For a personal library, leave
+   **User ID** blank: sidenote asks Zotero which user owns the key and fills it in.
+   Group libraries need their group ID. Enter the key directly in the local form
+   or hidden CLI prompt (`./notes zotero configure`); do not put it in chat.
+   Existing keys can be revoked in [Zotero API key settings](https://www.zotero.org/settings/keys).
 3. Choose **Import from Zotero online**. Repeat to refresh from your synced library.
    Zotero desktop can be closed. Unsynced desktop edits are available only through
    the desktop connection until Zotero syncs them.

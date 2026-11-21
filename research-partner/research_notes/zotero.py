@@ -339,10 +339,29 @@ def validate_connection(library_type, library_id):
         raise ValueError("Choose a personal or group library and enter its numeric Zotero library ID")
 
 
-def save_connection(vault, values):
+def valid_key(key):
+    return isinstance(key, str) and 0 < len(key) <= 4096 and not any(c.isspace() for c in key) and key.isprintable()
+
+
+def key_user_id(api_key, *, get=None):
+    """Return the personal library ID that owns a key; Zotero's key page does not show it."""
+    body, _ = (get or web_get)("keys/current", api_key)
+    user_id = body.get("userID") if isinstance(body, dict) else None
+    if isinstance(user_id, bool) or not isinstance(user_id, int) or user_id < 1:
+        raise ValueError("Zotero did not report a user ID for this key; enter it manually")
+    return str(user_id)
+
+
+def save_connection(vault, values, *, get=None):
     if not isinstance(values, dict) or set(values) - {"library_type", "library_id", "api_key"}:
         raise ValueError("Unsupported Zotero connection setting")
     library_type, library_id = values.get("library_type"), values.get("library_id")
+    if library_type == "users" and library_id == "":
+        # New personal connections need only a key: ask Zotero which user owns it.
+        key = vault.secret("ZOTERO_API_KEY") if values.get("api_key", "") == "" else values["api_key"]
+        if not valid_key(key):
+            raise ValueError("Enter a Zotero API key, or your numeric Zotero user ID")
+        library_id = key_user_id(key, get=get)
     validate_connection(library_type, library_id)
     # Reuse the existing owner-only, write-only secret store. Never copy keys into config.
     from .maintenance import save_settings
@@ -394,7 +413,7 @@ def import_online(vault, *, get=web_get):
     key = vault.secret("ZOTERO_API_KEY")
     if not key:
         raise ValueError("Save a Zotero API key in Settings → Zotero first")
-    if len(key) > 4096 or any(c.isspace() for c in key) or not key.isprintable():
+    if not valid_key(key):
         raise ValueError("Invalid saved Zotero API key")
     prefix = connection["library_type"] + "/" + connection["library_id"]
     def fetch(path, server_id):

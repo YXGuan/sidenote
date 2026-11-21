@@ -45,7 +45,7 @@ def parser():
     reference_commands.add_parser("online", help="Read your configured Zotero online library")
     connection = reference_commands.add_parser("configure", help="Configure online access using a hidden API key prompt")
     connection.add_argument("--library-type", choices=("users", "groups"), default="users")
-    connection.add_argument("--library-id", required=True)
+    connection.add_argument("--library-id", default="", help="Numeric user or group ID; omit for a personal library to read it from the key")
     reference_export = reference_commands.add_parser("export", help="Write references for Zotero File → Import")
     reference_export.add_argument("file")
     reference_export.add_argument("--format", choices=("ris", "csl-json"), default="ris")
@@ -161,7 +161,8 @@ def main(argv=None):
             elif args.zotero_action == "online":
                 print_json(import_online(vault))
             elif args.zotero_action == "configure":
-                validate_connection(args.library_type, args.library_id)
+                if args.library_id or args.library_type == "groups":
+                    validate_connection(args.library_type, args.library_id)
                 key = getpass.getpass("Zotero API key (input hidden; blank keeps saved key): ").strip()
                 print_json(save_connection(vault, {"library_type": args.library_type, "library_id": args.library_id, **({"api_key": key} if key else {})}))
             else:

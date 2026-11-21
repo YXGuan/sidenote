@@ -11932,10 +11932,10 @@ index 0000000..1fce638
 +}
 diff --git a/src/sidebar/components/ZoteroOnlineSettings.tsx b/src/sidebar/components/ZoteroOnlineSettings.tsx
 new file mode 100644
-index 0000000..3698d90
+index 0000000..500960b
 --- /dev/null
 +++ b/src/sidebar/components/ZoteroOnlineSettings.tsx
-@@ -0,0 +1,269 @@
+@@ -0,0 +1,293 @@
 +import { useEffect, useState } from 'preact/hooks';
 +
 +import { researchRequest } from '../helpers/local-research';
@@ -11950,10 +11950,21 @@ index 0000000..3698d90
 +
 +const OUTDATED_BACKEND =
 +  'The running local backend predates Zotero support. Restart it from this sidenote checkout, then retry.';
++const OUTDATED_EXTENSION =
++  'The running sidenote extension predates Zotero support. Open chrome://extensions, click Reload for sidenote, then refresh this page. Your saved pages and pairing are kept.';
++const NEW_KEY_URL = 'https://www.zotero.org/settings/keys/new';
++const KEYS_URL = 'https://www.zotero.org/settings/keys';
 +
-+/** Older bridges answer unknown Zotero routes with a generic 404. */
++/**
++ * Older bridges answer unknown Zotero routes with a generic 404; a background
++ * worker retained from an earlier build rejects the action itself.
++ */
 +const explain = (message: string) =>
-+  message === 'Route not found' ? OUTDATED_BACKEND : message;
++  message === 'Route not found'
++    ? OUTDATED_BACKEND
++    : message.includes('Unsupported local research action')
++      ? OUTDATED_EXTENSION
++      : message;
 +
 +export default function ZoteroOnlineSettings({
 +  onImported,
@@ -12010,7 +12021,9 @@ index 0000000..3698d90
 +              summary:
 +                error === OUTDATED_BACKEND
 +                  ? 'Backend restart needed'
-+                  : 'Unavailable',
++                  : error === OUTDATED_EXTENSION
++                    ? 'Extension reload needed'
++                    : 'Unavailable',
 +              tone: 'error',
 +            }
 +          : { summary: 'Checking connection…' },
@@ -12072,17 +12085,24 @@ index 0000000..3698d90
 +    <section className="ld-set-sub" aria-label="Zotero online connection">
 +      <h3>Online library</h3>
 +      <p className="ld-hint">
-+        Reads your synced personal or group library, even with Zotero closed.
-+        Create a read-only key in{' '}
-+        <a
-+          href="https://www.zotero.org/settings/keys"
-+          target="_blank"
-+          rel="noreferrer"
-+        >
-+          Zotero API key settings
-+        </a>
-+        , which also shows your numeric user ID. The key stays on this computer
-+        and is sent only to Zotero’s API.
++        Reads your synced personal or group library, even with Zotero closed.{' '}
++        {connected ? (
++          <>
++            Manage or revoke the key in{' '}
++            <a href={KEYS_URL} target="_blank" rel="noreferrer">
++              Zotero API key settings
++            </a>
++            .
++          </>
++        ) : (
++          <>
++            <a href={NEW_KEY_URL} target="_blank" rel="noreferrer">
++              Create a read-only Zotero API key
++            </a>{' '}
++            and paste it below; your personal user ID is read from the key.
++          </>
++        )}{' '}
++        The key stays on this computer and is sent only to Zotero’s API.
 +      </p>
 +      {saved && (
 +        <form className="ld-set-stack" onSubmit={save}>
@@ -12114,8 +12134,12 @@ index 0000000..3698d90
 +                  aria-label="Zotero library ID"
 +                  inputMode="numeric"
 +                  pattern="[1-9][0-9]*"
-+                  required
-+                  placeholder="e.g. 1234567"
++                  required={connection.library_type === 'groups'}
++                  placeholder={
++                    connection.library_type === 'groups'
++                      ? 'e.g. 1234567'
++                      : 'Read from API key'
++                  }
 +                  value={connection.library_id}
 +                  onInput={event =>
 +                    setConnection({
@@ -14410,11 +14434,11 @@ index 0000000..53af826
 +});
 diff --git a/src/sidebar/components/test/ZoteroOnlineSettings-test.js b/src/sidebar/components/test/ZoteroOnlineSettings-test.js
 new file mode 100644
-index 0000000..a87ba06
+index 0000000..fe90fac
 --- /dev/null
 +++ b/src/sidebar/components/test/ZoteroOnlineSettings-test.js
-@@ -0,0 +1,105 @@
-+import { mount } from '@hypothesis/frontend-testing';
+@@ -0,0 +1,158 @@
++import { mount, waitFor } from '@hypothesis/frontend-testing';
 +import { act } from 'preact/test-utils';
 +
 +import ZoteroOnlineSettings, { $imports } from '../ZoteroOnlineSettings';
@@ -14435,12 +14459,18 @@ index 0000000..a87ba06
 +    });
 +  });
 +  afterEach(() => $imports.$restore());
-+  const create = async () => {
++  /** Mount and wait until the saved settings have loaded or failed. */
++  const create = async (props = {}) => {
 +    let wrapper;
 +    await act(async () => {
-+      wrapper = mount(<ZoteroOnlineSettings onImported={onImported} />);
++      wrapper = mount(
++        <ZoteroOnlineSettings onImported={onImported} {...props} />,
++      );
 +    });
-+    wrapper.update();
++    await waitFor(() => {
++      wrapper.update();
++      return wrapper.exists('form') || wrapper.exists('[role="alert"]');
++    });
 +    return wrapper;
 +  };
 +  const save = async wrapper => {
@@ -14460,6 +14490,53 @@ index 0000000..a87ba06
 +    assert.calledWithExactly(request, 'save-zotero-connection', {
 +      values: settings.connection,
 +    });
++  });
++  it('sends new connections to Zotero’s key creation page and reads the user ID from the key', async () => {
++    settings = {
++      connection: { library_type: 'users', library_id: '' },
++      api_key: { configured: false, editable: true },
++    };
++    request.resolves(settings);
++    const wrapper = await create();
++    assert.equal(
++      wrapper.find('a').prop('href'),
++      'https://www.zotero.org/settings/keys/new',
++    );
++    const id = wrapper.find('input[aria-label="Zotero library ID"]');
++    assert.isFalse(id.prop('required'));
++    assert.equal(id.prop('placeholder'), 'Read from API key');
++    act(() =>
++      wrapper
++        .find('select')
++        .props()
++        .onChange({ currentTarget: { value: 'groups' } }),
++    );
++    wrapper.update();
++    assert.isTrue(
++      wrapper.find('input[aria-label="Zotero library ID"]').prop('required'),
++    );
++  });
++  it('links connected libraries to key management', async () => {
++    const wrapper = await create();
++    assert.equal(
++      wrapper.find('a').prop('href'),
++      'https://www.zotero.org/settings/keys',
++    );
++  });
++  it('explains an extension worker retained from an older build', async () => {
++    const onStatus = sinon.stub();
++    request.rejects(new Error('Unsupported local research action'));
++    const wrapper = await create({ onStatus });
++    assert.include(
++      wrapper.find('[role="alert"]').text(),
++      'chrome://extensions',
++    );
++    await waitFor(() =>
++      onStatus.calledWithMatch({
++        summary: 'Extension reload needed',
++        tone: 'error',
++      }),
++    );
 +  });
 +  it('saves replacement keys only through the paired bridge and clears the input', async () => {
 +    const wrapper = await create();

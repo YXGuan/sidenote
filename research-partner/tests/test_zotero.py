@@ -226,6 +226,29 @@ class ZoteroTests(unittest.TestCase):
         save_connection(self.vault, {"library_type": "users", "library_id": "12345", "api_key": None})
         self.assertFalse(connection_settings(self.vault)["api_key"]["configured"])
 
+    def test_new_personal_connection_reads_user_id_from_key(self):
+        calls = []
+        def get(path, key):
+            calls.append((path, key))
+            return {"key": key, "userID": 24680, "username": "synthetic", "access": {}}, {}
+        result = save_connection(self.vault, {"library_type": "users", "library_id": "", "api_key": "synthetic-zotero-key"}, get=get)
+        self.assertEqual(calls, [("keys/current", "synthetic-zotero-key")])
+        self.assertEqual(result["connection"], {"library_type": "users", "library_id": "24680"})
+        self.assertNotIn("synthetic-zotero-key", json.dumps(result) + json.dumps(self.vault.config()))
+        # A blank key field reuses the saved key; an explicit ID makes no request.
+        save_connection(self.vault, {"library_type": "users", "library_id": ""}, get=get)
+        self.assertEqual(calls[-1], ("keys/current", "synthetic-zotero-key"))
+        save_connection(self.vault, {"library_type": "users", "library_id": "12345"}, get=get)
+        self.assertEqual(len(calls), 2)
+        for values, response in (({"library_type": "users", "library_id": "", "api_key": None}, None),
+                                 ({"library_type": "groups", "library_id": "", "api_key": "synthetic-zotero-key"}, None),
+                                 ({"library_type": "users", "library_id": ""}, {"userID": True}),
+                                 ({"library_type": "users", "library_id": ""}, [])):
+            with self.assertRaises(ValueError):
+                save_connection(self.vault, values, get=lambda path, key: (response, {}))
+        self.assertEqual(connection_settings(self.vault)["connection"]["library_id"], "12345")
+        self.assertEqual(self.vault.secret("ZOTERO_API_KEY"), "synthetic-zotero-key")
+
     def test_online_library_uses_saved_id_and_key_and_matches_synced_desktop_items(self):
         save_connection(self.vault, {"library_type": "users", "library_id": "12345", "api_key": "synthetic-zotero-key"})
         rows = [{"key": "TEST0001", "library": {"type": "user", "id": 12345}, "data": {"key": "TEST0001", "itemType": "book", "title": "Offline book"}}]
